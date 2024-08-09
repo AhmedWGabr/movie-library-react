@@ -1,24 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Movies Liberary</title>
+    <title>Movies Library</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
-    <header>
-        <nav>
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="movies.html">Movies</a></li>
-                <li><a href="tvshows.html">TV Shows</a></li>
-                <li><a href="about.html">About</a></li>
-            </ul>
-        </nav>
-    </header>
-    <main>
 
-    </main>
-    
+<body class="bg-gray-900 text-white">
+    <div class="container mx-auto p-4">
+        <h1 class="text-4xl font-bold mb-4">Movies Library</h1>
+        <form id="search-form" class="mb-4 ">
+            <input type="text" id="query" class="p-2  text-black" placeholder="Search for movies...">
+            <button type="submit" class="mt-2 p-2 bg-blue-500 hover:bg-blue-700">Search</button>
+        </form>
+        <div id="movies" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </div>
+    <script src="script.js"></script>
 </body>
+
 </html>
