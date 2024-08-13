@@ -7,7 +7,7 @@ function addSearchEventListener(formId, inputId) {
     document.getElementById(formId).addEventListener('submit', function (event) {
         event.preventDefault();
         const query = document.getElementById(inputId).value;
-        fetchMovies(query);
+        searchMovies(query);
     });
 }
 
@@ -33,36 +33,21 @@ function synchronizeSearchInputs(inputId1, inputId2) {
 synchronizeSearchInputs('query', 'query-sm');
 
 // This function fetches movies from the API based on the query string and displays them on the page.
-function fetchMovies(query) {
+function searchMovies(query) {
     fetch(`${BASE_URL}/search/movie?api_key=${API_KEY}&query=${query}`)
         .then(response => response.json())
         .then(data => {
-            displayMovies(data.results);
+            displaySearchMovies(data.results);
         })
         .catch(error => console.error('Error fetching movies:', error));
 }
 
 // The displayMovies function takes an array of movie objects and displays them in a container element with the ID movies.
-function displayMovies(movies) {
+function displaySearchMovies(movies) {
     // This line retrieves the HTML element with the ID movies and stores it in the moviesContainer variable.
     const moviesContainer = document.getElementById('movies');
     // This line clears any existing content inside the moviesContainer.
-    moviesContainer.innerHTML = '';
-    // This line loops through each movie object in the movies array and creates a new div element for each movie.
-    movies.forEach(movie => {
-        // This line creates a new div element with the class movie and adds it to the moviesContainer.
-        const movieElement = document.createElement('div');
-        // This line sets the innerHTML of the movieElement to display the movie poster, title, and overview.
-        movieElement.classList.add('movie', 'p-4', 'bg-gray-800', 'rounded');
-        // This Line add movie card.
-        movieElement.innerHTML = `
-            <img src="${IMG_URL + movie.poster_path}" alt="${movie.title}" class="w-full h-auto mb-2">
-            <h2 class="text-xl font-bold">${movie.title}</h2>
-            <p>${movie.overview}</p>
-        `;
-        // This line appends the movieElement to the moviesContainer.
-        moviesContainer.appendChild(movieElement);
-    });
+    moviesContainer.innerHTML = movies.map(movie => createMovieCard(movie)).join('');
 }
 
 // Toggle dropdown menu
@@ -81,13 +66,13 @@ document.addEventListener('click', function (event) {
 
 // Fetch and display featured movies on page load
 document.addEventListener('DOMContentLoaded', () => {
-    fetchFeaturedMovies('box-office', '/movie/now_playing', 'box-office-list');
-    fetchFeaturedMovies('all-time', '/movie/top_rated', 'all-time-list');
-    fetchFeaturedMovies('popular', '/movie/popular', 'popular-list');
+    FeaturedMovies('box-office', '/movie/now_playing', 'box-office-list');
+    FeaturedMovies('all-time', '/movie/top_rated', 'all-time-list');
+    FeaturedMovies('popular', '/movie/popular', 'popular-list');
 });
 
 // Function to fetch featured movies from the API and display them on the page
-function fetchFeaturedMovies(section, endpoint, elementId) {
+function FeaturedMovies(section, endpoint, elementId) {
     fetch(`${BASE_URL}${endpoint}?api_key=${API_KEY}`)
         .then(response => response.json())
         .then(data => {
