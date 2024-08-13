@@ -2,6 +2,16 @@ const API_KEY = '88c00e80d532ec774c5bf022e4ad0620'; // Your API key
 const BASE_URL = 'https://api.themoviedb.org/3'; // Base URL for the API
 const IMG_URL = 'https://image.tmdb.org/t/p/w500'; // Base URL for movie posters
 
+// Function to remove sections by their IDs
+function removeSections(sections) {
+    sections.forEach(id => {
+        const section = document.getElementById(id);
+        if (section) {
+            section.remove();
+        }
+    });
+}
+
 // Function to add event listener to search forms
 function addSearchEventListener(formId, inputId) {
     document.getElementById(formId).addEventListener('submit', function (event) {
@@ -34,6 +44,7 @@ synchronizeSearchInputs('query', 'query-sm');
 
 // This function fetches movies from the API based on the query string and displays them on the page.
 function searchMovies(query) {
+    removeSections(['featured-movies']);
     fetch(`${BASE_URL}/search/movie?api_key=${API_KEY}&query=${query}`)
         .then(response => response.json())
         .then(data => {
@@ -65,6 +76,7 @@ document.addEventListener('click', function (event) {
 });
 
 // Fetch and display featured movies on page load
+
 document.addEventListener('DOMContentLoaded', () => {
     FeaturedMovies('box-office', '/movie/now_playing', 'box-office-list');
     FeaturedMovies('all-time', '/movie/top_rated', 'all-time-list');
