@@ -1,12 +1,21 @@
 const API_KEY = '88c00e80d532ec774c5bf022e4ad0620'; // Your API key
 const BASE_URL = 'https://api.themoviedb.org/3'; // Base URL for the API
 const IMG_URL = 'https://image.tmdb.org/t/p/w500'; // Base URL for movie posters
+const currentcurrentPage = document.body.getAttribute('data-page');
 
-// Function to remove sections by their IDs
-const removeSections = (sections) => {
-    sections.forEach(id => {
-        const section = document.getElementById(id);
-        if (section) section.remove();
+//****************************************************************************************************************************************************
+//                                                               Search Functionality                                                                *
+//****************************************************************************************************************************************************
+
+let currentPage = 1;
+let resultsPerPage = 5;
+
+// Function to remove sections inside the main element
+const removeSections = () => {
+    const mainElement = document.querySelector('main');
+    const sections = mainElement.querySelectorAll('section');
+    sections.forEach(section => {
+        section.remove();
     });
 };
 
@@ -15,7 +24,8 @@ const addSearchEventListener = (formId, inputId) => {
     document.getElementById(formId).addEventListener('submit', (event) => {
         event.preventDefault();
         const query = document.getElementById(inputId).value;
-        searchMovies(query);
+        currentPage = 1; // Reset to first page on new search
+        searchMovies(query, currentPage, resultsPerPage);
     });
 };
 
@@ -36,43 +46,94 @@ const synchronizeSearchInputs = (inputId1, inputId2) => {
 synchronizeSearchInputs('query', 'query-sm');
 
 // Function to fetch movies from the API based on the query string and display them on the page
-const searchMovies = async (query) => {
-    removeSections(['featured-movies']);
+const searchMovies = async (query, page = 1, resultsPerPage = 10) => {
+    removeSections();
     try {
-        const response = await fetch(`${BASE_URL}/search/movie?api_key=${API_KEY}&query=${query}`);
+        const response = await fetch(`${BASE_URL}/search/movie?api_key=${API_KEY}&query=${query}&page=${page}&per_page=${resultsPerPage}`);
         const data = await response.json();
-        displaySearchMovies(data.results);
+        const newSection = createMoviesSection(query, data.total_results, page, resultsPerPage);
+        displaySearchMovies(data.results, newSection.querySelector('#movies'), resultsPerPage);
     } catch (error) {
         console.error('Error fetching movies:', error);
     }
 };
 
-// Function to display movies in a container element with the ID movies
-const displaySearchMovies = (movies) => {
-    const moviesContainer = document.getElementById('movies');
-    moviesContainer.innerHTML = movies.map(createMovieCard).join('');
+// Function to create a new section for displaying movies
+const createMoviesSection = (query, numResults, page, resultsPerPage) => {
+    const mainElement = document.querySelector('main');
+    const section = document.createElement('section');
+    section.className = 'searched-movies';
+    const totalPages = Math.ceil(numResults / resultsPerPage);
+    section.innerHTML = `
+        <div class="container mx-auto p-4">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-semibold">Search results for "${query}" (${numResults} results)</h3>
+                <div class="flex items-center">
+                    <label for="results-per-page" class="mr-2">Results per page:</label>
+                    <select id="results-per-page" class="bg-gray-800 border border-gray-300 rounded-md px-2 py-1">
+                        <option value="5">5</option>
+                        <option value="10">10</option>
+                        <option value="15">15</option>
+                        <option value="20">20</option>
+                    </select>
+                </div>
+            </div>
+            <div id="movies" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3"></div>
+            <div class="flex justify-center mt-4">
+                <button id="prev-page" class="bg-gray-800 text-white px-4 py-2 rounded-md mr-2" ${page === 1 ? 'disabled' : ''}>Previous</button>
+                <span id="page-info" class="text-white px-4 py-2">Page ${page} of ${totalPages}</span>
+                <button id="next-page" class="bg-gray-800 text-white px-4 py-2 rounded-md" ${page >= totalPages ? 'disabled' : ''}>Next</button>
+            </div>
+        </div>
+    `;
+    mainElement.appendChild(section);
+
+    // Set the selected value of the results-per-page dropdown
+    section.querySelector('#results-per-page').value = resultsPerPage;
+
+    // Add event listeners for pagination
+    section.querySelector('#prev-page').addEventListener('click', () => {
+        if (page > 1) {
+            currentPage--;
+            searchMovies(query, currentPage, resultsPerPage);
+        }
+    });
+
+    section.querySelector('#next-page').addEventListener('click', () => {
+        if (page < totalPages) {
+            currentPage++;
+            searchMovies(query, currentPage, resultsPerPage);
+        }
+    });
+
+    // Add event listener for results per page change
+    section.querySelector('#results-per-page').addEventListener('change', (event) => {
+        resultsPerPage = parseInt(event.target.value);
+        currentPage = 1; // Reset to first page on results per page change
+        searchMovies(query, currentPage, resultsPerPage);
+    });
+
+    return section;
 };
 
-// Toggle dropdown menu
-document.getElementById('menu-button').addEventListener('click', () => {
-    const menu = document.getElementById('dropdown-menu');
-    menu.classList.toggle('hidden');
-});
+// Function to display movies in a container element
+const displaySearchMovies = (movies, container, resultsPerPage) => {
+    container.innerHTML = movies.slice(0, resultsPerPage).map(createMovieCard).join('');
+};
 
-// Close dropdown menu when clicking outside
-document.addEventListener('click', (event) => {
-    const menu = document.getElementById('dropdown-menu');
-    if (!event.target.closest('#menu-button') && !event.target.closest('#dropdown-menu')) {
-        menu.classList.add('hidden');
-    }
-});
+
+//****************************************************************************************************************************************************
+//                                                                 Featured Movies                                                                   *
+//****************************************************************************************************************************************************
 
 // Fetch and display featured movies on page load
-document.addEventListener('DOMContentLoaded', () => {
-    fetchAndDisplayFeaturedMovies('box-office', '/movie/now_playing', 'box-office-list');
-    fetchAndDisplayFeaturedMovies('all-time', '/movie/top_rated', 'all-time-list');
-    fetchAndDisplayFeaturedMovies('popular', '/movie/popular', 'popular-list');
-});
+if (currentcurrentPage === 'home') {
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchAndDisplayFeaturedMovies('box-office', '/movie/now_playing', 'box-office-list');
+        fetchAndDisplayFeaturedMovies('all-time', '/movie/top_rated', 'all-time-list');
+        fetchAndDisplayFeaturedMovies('popular', '/movie/popular', 'popular-list');
+    });
+}
 
 // Function to fetch featured movies from the API and display them on the page
 const fetchAndDisplayFeaturedMovies = async (section, endpoint, elementId) => {
@@ -81,12 +142,19 @@ const fetchAndDisplayFeaturedMovies = async (section, endpoint, elementId) => {
         const data = await response.json();
         const movies = data.results.slice(0, 10);
         const container = document.getElementById(elementId);
-        container.innerHTML = movies.map(createMovieCard).join('');
+        if (container) {
+            container.innerHTML = movies.map(createMovieCard).join('');
+        } else {
+            console.error(`Element with ID ${elementId} not found.`);
+        }
     } catch (error) {
         console.error('Error fetching movies:', error);
     }
 };
 
+//****************************************************************************************************************************************************
+//                                                                Create a Movie Card                                                                *
+//****************************************************************************************************************************************************
 
 // Function to create a movie card HTML element
 const createMovieCard = (movie) => `
@@ -110,6 +178,37 @@ const createMovieCard = (movie) => `
         </div>
     </div>
 `;
+
+const getRatingColor = (rating) => {
+    if (rating >= 7.5) {
+        return 'green-500';
+    } else if (rating >= 5) {
+        return 'yellow-500';
+    } else {
+        return 'red-500';
+    }
+};
+
+//****************************************************************************************************************************************************
+//                                                                Dropdown menu Functionality                                                        *
+//****************************************************************************************************************************************************
+// Toggle dropdown menu
+document.getElementById('menu-button').addEventListener('click', () => {
+    const menu = document.getElementById('dropdown-menu');
+    menu.classList.toggle('hidden');
+});
+
+// Close dropdown menu when clicking outside
+document.addEventListener('click', (event) => {
+    const menu = document.getElementById('dropdown-menu');
+    if (!event.target.closest('#menu-button') && !event.target.closest('#dropdown-menu')) {
+        menu.classList.add('hidden');
+    }
+});
+
+//****************************************************************************************************************************************************
+//                                                                    Wishlist Functionality                                                         *
+//****************************************************************************************************************************************************
 
 // Function to toggle movie in the wishlist
 const toggleWishlist = (button, movieId) => {
@@ -150,6 +249,11 @@ const renderWishlist = () => {
     const wishlist = getWishlist();
     const wishlistContainer = document.getElementById('wishlist-container');
 
+    if (!wishlistContainer) {
+        console.error('wishlist-container element not found.');
+        return;
+    }
+
     if (wishlist.length === 0) {
         wishlistContainer.innerHTML = '<p class="text-gray-500">Your wishlist is empty.</p>';
         return;
@@ -168,27 +272,17 @@ const renderWishlist = () => {
 };
 
 // Function to fetch movie details from the API
-const fetchMovieDetails = (movieId) => {
-    return fetch(`https://api.themoviedb.org/3/movie/${movieId}?api_key=${API_KEY}`)
-        .then(response => response.json());
+const fetchMovieDetails = async (movieId) => {
+    const response = await fetch(`https://api.themoviedb.org/3/movie/${movieId}?api_key=${API_KEY}`);
+    return await response.json();
 };
 
 // Initialize wishlist button states and render wishlist on page load
-document.addEventListener('DOMContentLoaded', () => {
-    updateWishlistButtons();
-    renderWishlist();
-});
-
-
-const getRatingColor = (rating) => {
-    if (rating >= 7.5) {
-        return 'green-500';
-    } else if (rating >= 5) {
-        return 'yellow-500';
-    } else {
-        return 'red-500';
-    }
-};
-
+if (currentcurrentPage === 'wishlist') {
+    document.addEventListener('DOMContentLoaded', () => {
+        updateWishlistButtons();
+        renderWishlist();
+    });
+}
 
 
