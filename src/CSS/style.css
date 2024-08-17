@@ -15,5 +15,5 @@
     text-overflow: ellipsis;
     /* Adjust the number of lines based on the card height */
     -webkit-line-clamp: 4;
-    
+
 }
