@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Movies Library</title>
+    <!-- Favicon -->
+    <link rel="icon" href="./src/images/favicon.png" type="image/x-icon">
     <!-- Tailwind CSS output -->
     <link href="./src/CSS/output.css" rel="stylesheet">
     <!-- Custom CSS -->
@@ -58,7 +60,7 @@
 
                     <!-- Wishlist Icon -->
                     <div class="text-xl">
-                        <a href="./pages/wishlist.html" class="wishlist-icon text-2xl font-bebas-neue">❤️ <span
+                        <a href="#" class="wishlist-icon text-2xl font-bebas-neue">❤️ <span
                                 class="font-bold">WISHLIST</span></a>
                     </div>
                 </div>
@@ -88,36 +90,44 @@
             </div>
         </nav>
     </header>
-    
+
     <main class="pt-20">
 
         <!-- This div used as container for movies grabed from TMDB when click the submet button -->
+        
+
+        <section id="featured-movies" class="container mx-auto p-4 ">
+            <h1 class="font-bebas-neue text-7xl font-bold  mb-4 py-4 border-b-2">Featured Movies</h1>
+
+            <section id="box-office" class="mb-8 pb-3 border-b-2">
+                <h2 class="font-bebas-neue text-5xl font-semibold mt-2  py-4">Box Office Top 10</h2>
+                <div id="box-office-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4"></div>
+            </section>
+
+            <section id="all-time" class="mb-8 pb-3 border-b-2">
+                <h2 class="font-bebas-neue text-5xl font-semibold mt-2  py-4">All Time Top 10</h2>
+                <div id="all-time-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4"></div>
+            </section>
+
+            <section id="popular" class="mb-8 pb-3 border-b-2">
+                <h2 class="font-bebas-neue text-5xl font-semibold mt-2  py-4">Popular Movies</h2>
+                <div id="popular-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4"></div>
+            </section>
+        </section>
+
         <section class="searched-movies">
             <div class="container mx-auto p-4">
-                <div id="movies" class="grid  grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                <div id="movies" class="grid  grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3"></div>
             </div>
         </section>
-
-        <section id="featured-movies" class="container mx-auto p-4" >
-            <h1 class="text-3xl font-bold mb-4">Movie Listings</h1>
-            
-            <section id="box-office" class="mb-8">
-                <h2 class="text-2xl font-semibold mb-2">Box Office Top 10</h2>
-                <div id="box-office-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-            </section>
-            
-            <section id="all-time" class="mb-8">
-                <h2 class="text-2xl font-semibold mb-2">All Time Top 10</h2>
-                <div id="all-time-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-            </section>
-            
-            <section id="popular" class="mb-8">
-                <h2 class="text-2xl font-semibold mb-2">Popular Movies</h2>
-                <div id="popular-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-            </section>
-        </section>
-
     </main>
+
+    <footer class="bg-gray-800">
+        
+        <div class="container mx-auto p-4 text-center">
+            <p class="text-xl font-bebas-neue">Movies Library &copy; 2024</p>
+        </div>
+    </footer>
     <script src="./src/js/script.js"></script>
 </body>
 
