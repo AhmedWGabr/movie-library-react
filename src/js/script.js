@@ -87,9 +87,10 @@ const fetchAndDisplayFeaturedMovies = async (section, endpoint, elementId) => {
     }
 };
 
+
 // Function to create a movie card HTML element
 const createMovieCard = (movie) => `
-    <div class="relative bg-slate-300 rounded-lg shadow-md overflow-hidden h-96 hover:scale-105 ">
+    <div class="relative bg-slate-300 rounded-lg shadow-md overflow-hidden h-96 hover:scale-105">
         <div class="absolute inset-0">
             <img src="${IMG_URL}${movie.poster_path}" alt="${movie.title}" class="w-full h-full object-cover">
         </div>
@@ -110,8 +111,9 @@ const createMovieCard = (movie) => `
     </div>
 `;
 
+// Function to toggle movie in the wishlist
 const toggleWishlist = (button, movieId) => {
-    let wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
+    let wishlist = getWishlist();
     if (wishlist.includes(movieId)) {
         wishlist = wishlist.filter(id => id !== movieId);
         button.classList.remove('text-red-500');
@@ -119,18 +121,62 @@ const toggleWishlist = (button, movieId) => {
         wishlist.push(movieId);
         button.classList.add('text-red-500');
     }
+    saveWishlist(wishlist);
+};
+
+// Function to get wishlist from localStorage
+const getWishlist = () => {
+    return JSON.parse(localStorage.getItem('wishlist')) || [];
+};
+
+// Function to save wishlist to localStorage
+const saveWishlist = (wishlist) => {
     localStorage.setItem('wishlist', JSON.stringify(wishlist));
 };
 
-// Initialize wishlist button states
-document.addEventListener('DOMContentLoaded', () => {
-    const wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
+// Function to update the state of wishlist buttons on page load
+const updateWishlistButtons = () => {
+    const wishlist = getWishlist();
     document.querySelectorAll('.wishlist-button').forEach(button => {
         const movieId = parseInt(button.getAttribute('data-movie-id'), 10);
         if (wishlist.includes(movieId)) {
             button.classList.add('text-red-500');
         }
     });
+};
+
+// Function to render the wishlist movies on page load
+const renderWishlist = () => {
+    const wishlist = getWishlist();
+    const wishlistContainer = document.getElementById('wishlist-container');
+
+    if (wishlist.length === 0) {
+        wishlistContainer.innerHTML = '<p class="text-gray-500">Your wishlist is empty.</p>';
+        return;
+    }
+
+    wishlist.forEach(movieId => {
+        fetchMovieDetails(movieId)
+            .then(movie => {
+                const movieCard = createMovieCard(movie);
+                wishlistContainer.innerHTML += movieCard;
+            })
+            .catch(error => {
+                console.error('Error fetching movie details:', error);
+            });
+    });
+};
+
+// Function to fetch movie details from the API
+const fetchMovieDetails = (movieId) => {
+    return fetch(`https://api.themoviedb.org/3/movie/${movieId}?api_key=${API_KEY}`)
+        .then(response => response.json());
+};
+
+// Initialize wishlist button states and render wishlist on page load
+document.addEventListener('DOMContentLoaded', () => {
+    updateWishlistButtons();
+    renderWishlist();
 });
 
 
