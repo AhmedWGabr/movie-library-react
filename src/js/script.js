@@ -166,7 +166,7 @@ const createMovieCard = (movie) => `
             <h3 class="text-white text-lg font-semibold text-shadow">${movie.title}</h3>
             <p class="text-white text-shadow">${movie.release_date}</p>
             <p class="text-white text-shadow text-md truncate-overview">${movie.overview}</p>
-            <a href="#" class="block mt-4 text-blue-300 font-semibold text-shadow" onclick="openMovieDetails(${movie.id})">View details</a>
+            <a href="./movie-detail.html?movieId=${movie.id}" class="block mt-4 text-blue-300 font-semibold text-shadow">View details</a>
             <div class="absolute top-4 right-4 ${getRatingColor(movie.vote_average)} rounded-full w-12 h-12 flex items-center justify-center">
                 <p class="text-white font-semibold">${Math.round(movie.vote_average * 10)}%</p>
             </div>
@@ -179,11 +179,6 @@ const createMovieCard = (movie) => `
     </div>
 `;
 
-// Function to open movie details page
-const openMovieDetails = (movieId) => {
-    // Replace this with your code to open the movie details page
-    console.log(`Opening movie details for movie with ID ${movieId}`);
-};
 
 let getRatingColor = (rating) => {
     if (rating >= 9) {
@@ -298,3 +293,104 @@ if (currentcurrentPage === 'wishlist') {
 }
 
 
+//****************************************************************************************************************************************************
+//                                                                Movie Detail Page Functionality                                                    *
+//****************************************************************************************************************************************************
+
+// Function to get URL parameters
+const getUrlParameter = (name) => {
+    name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+    const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+    const results = regex.exec(location.search);
+    return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+};
+
+if (currentcurrentPage === 'movie-details') {
+    document.addEventListener('DOMContentLoaded', async () => {
+        const movieId = getUrlParameter('movieId');
+        if (movieId) {
+            try {
+                // Fetch movie details
+                const movieDetailsResponse = await fetch(`${BASE_URL}/movie/${movieId}?api_key=${API_KEY}&append_to_response=videos,credits,reviews`);
+                const movieDetails = await movieDetailsResponse.json();
+
+                // Fetch recommended movies
+                const recommendedMoviesResponse = await fetch(`${BASE_URL}/movie/${movieId}/recommendations?api_key=${API_KEY}`);
+                const recommendedMovies = await recommendedMoviesResponse.json();
+
+                // Populate the main section with movie details and trailer
+                const mainSection = document.querySelector('main');
+                mainSection.innerHTML = `
+                <section id="movie-details" class="bg-slate-300 shadow-md rounded-lg p-4 mb-4">
+                    <div class="flex flex-col md:flex-row items-start md:items-center mb-4">
+                        <img src="${IMG_URL}${movieDetails.poster_path}" alt="${movieDetails.title}" class="w-full md:w-1/3 rounded-lg shadow-md">
+                        <div class="md:ml-4 mt-4 md:mt-0 p-6">
+                            <h3 class="text-2xl font-bebas-neue text-gray-700 font-bold mb-2">${movieDetails.title}</h3>
+                            <p class="text-gray-700 text-xl mb-2">${movieDetails.release_date}</p>
+                            <p class="text-gray-700 text-xl mb-4">${movieDetails.runtime} minutes</p>
+                            <p class="text-gray-700">${movieDetails.genres.map(genre => genre.name).join(', ')}</p>
+                            <div class="my-4">
+                                <h3 class="text-2xl font-bebas-neue text-gray-700 font-semibold">Overview</h3>
+                                <p class="text-gray-700 mb-4">${movieDetails.overview}</p>
+                            </div>
+                            <div class="aspect-w-16 aspect-h-9 mb-4">
+                                <iframe class="w-fit h-full" src="https://www.youtube.com/embed/${movieDetails.videos.results[0].key}" frameborder="0" allowfullscreen></iframe>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <section id="cast" class="bg-slate-300 shadow-md rounded-lg p-4 mb-4">
+                    <h3 class="text-4xl font-bebas-neue text-gray-700 font-bold mb-2">Cast</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                        ${movieDetails.credits.cast.slice(0, 8).map(cast => `
+                            <div class="flex flex-col items-center">
+                                <img src="${IMG_URL}${cast.profile_path}" alt="${cast.name}" class="w-32 h-32 object-cover rounded-full shadow-md">
+                                <p class="text-gray-700 text-lg font-semibold mt-2">${cast.name}</p>
+                                <p class="text-gray-700 text-md">${cast.character}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                </section>
+                <section id="reviews" class="bg-slate-300 shadow-md rounded-lg p-4 mb-4">
+                    <h3 class="text-4xl font-bebas-neue text-gray-700 font-bold mb-2">Reviews</h3>
+                    <div class="flex flex-col gap-4">
+                        ${movieDetails.reviews.results.slice(0, 8).map(review => `
+                            <div class="bg-white shadow-md rounded-lg p-4 flex flex-col items-start">
+                                <div class="flex items-center mb-4">
+                                    <img src="${IMG_URL}${review.author_details.avatar_path}" alt="${review.author}" class="w-16 h-16 object-cover rounded-full shadow-md mr-4">
+                                    <div>
+                                        <p class="text-gray-700 text-lg font-semibold">${review.author}</p>
+                                    </div>
+                                </div>
+                                <p class="text-gray-700 text-md">${review.content}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                </section>
+                <section id="recommended-movies" class="bg-slate-300 shadow-md rounded-lg p-4 mb-4">
+                    <h3 class="text-4xl font-bebas-neue text-gray-700 font-bold mb-2">Recommended Movies</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                        ${recommendedMovies.results.map(movie => createMovieCard(movie)).join('')}
+                    </div>
+                </section>
+            `;
+
+                // Add additional CSS classes to make the div look like a card without border
+                const movieDetailsSection = document.getElementById('movie-details');
+                movieDetailsSection.classList.add('bg-white', 'p-0');
+
+                // Show the movie details and recommended movies in the same line if screen > lg
+                if (window.innerWidth > 1024) {
+                    mainSection.classList.add('grid', 'grid-cols-1', 'lg:grid-cols-2', 'gap-4');
+                } else {
+                    mainSection.classList.remove('grid', 'grid-cols-1', 'lg:grid-cols-2', 'gap-4');
+                }
+
+            } catch (error) {
+                console.error('Error fetching movie details:', error);
+            }
+        } else {
+            console.error('No movie ID found in URL parameters.');
+        }
+    });
+}
