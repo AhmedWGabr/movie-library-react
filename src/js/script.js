@@ -67,9 +67,9 @@ const createMoviesSection = (query, numResults, page, resultsPerPage) => {
     section.innerHTML = `
         <div class="container mx-auto p-4">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-xl font-semibold">Search results for "${query}" (${numResults} results)</h3>
+                <h3 class="text-sm sm:text-xl font-semibold">Search results for "${query}" (${numResults} results)</h3>
                 <div class="flex items-center">
-                    <label for="results-per-page" class="mr-2">Results per page:</label>
+                    <label for="results-per-page" class="mr-2 hidden sm:block">Results per page:</label>
                     <select id="results-per-page" class="bg-gray-800 border border-gray-300 rounded-md px-2 py-1">
                         <option value="5">5</option>
                         <option value="10">10</option>
@@ -166,8 +166,8 @@ const createMovieCard = (movie) => `
             <h3 class="text-white text-lg font-semibold text-shadow">${movie.title}</h3>
             <p class="text-white text-shadow">${movie.release_date}</p>
             <p class="text-white text-shadow text-md truncate-overview">${movie.overview}</p>
-            <a href="#" class="block mt-4 text-blue-300 font-semibold text-shadow">View details</a>
-            <div class="absolute top-4 right-4 bg-${getRatingColor(movie.vote_average)} rounded-full w-12 h-12 flex items-center justify-center">
+            <a href="#" class="block mt-4 text-blue-300 font-semibold text-shadow" onclick="openMovieDetails(${movie.id})">View details</a>
+            <div class="absolute top-4 right-4 ${getRatingColor(movie.vote_average)} rounded-full w-12 h-12 flex items-center justify-center">
                 <p class="text-white font-semibold">${Math.round(movie.vote_average * 10)}%</p>
             </div>
             <button class="absolute top-4 left-4 bg-slate-400 rounded-full w-8 h-8 flex items-center justify-center wishlist-button" data-movie-id="${movie.id}" onclick="toggleWishlist(this, ${movie.id})">
@@ -179,13 +179,25 @@ const createMovieCard = (movie) => `
     </div>
 `;
 
-const getRatingColor = (rating) => {
-    if (rating >= 7.5) {
-        return 'green-500';
-    } else if (rating >= 5) {
-        return 'yellow-500';
+// Function to open movie details page
+const openMovieDetails = (movieId) => {
+    // Replace this with your code to open the movie details page
+    console.log(`Opening movie details for movie with ID ${movieId}`);
+};
+
+let getRatingColor = (rating) => {
+    if (rating >= 9) {
+        return 'bg-green-700'; // Dark green for excellent ratings
+    } else if (rating >= 7.5) {
+        return 'bg-green-500'; // Green for good ratings
+    } else if (rating >= 6) {
+        return 'bg-yellow-600'; // Yellow for average ratings
+    } else if (rating >= 4.5) {
+        return 'bg-orange-500'; // Orange for below average ratings
+    } else if (rating >= 3) {
+        return 'bg-red-400'; // Red for poor ratings
     } else {
-        return 'red-500';
+        return 'bg-red-700'; // Dark red for very poor ratings
     }
 };
 
