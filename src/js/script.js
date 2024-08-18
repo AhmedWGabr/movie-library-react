@@ -9,6 +9,7 @@ const currentcurrentPage = document.body.getAttribute('data-page');
 
 let currentPage = 1;
 let resultsPerPage = 5;
+let movies = []; // Define movies globally
 
 // Function to remove sections inside the main element
 const removeSections = () => {
@@ -25,7 +26,7 @@ const addSearchEventListener = (formId, inputId) => {
         event.preventDefault();
         const query = document.getElementById(inputId).value;
         currentPage = 1; // Reset to first page on new search
-        searchMovies(query, currentPage, resultsPerPage);
+        window.location.href = `movies.html?query=${encodeURIComponent(query)}&page=${currentPage}&resultsPerPage=${resultsPerPage}`;
     });
 };
 
@@ -51,8 +52,9 @@ const searchMovies = async (query, page = 1, resultsPerPage = 10) => {
     try {
         const response = await fetch(`${BASE_URL}/search/movie?api_key=${API_KEY}&query=${query}&page=${page}&per_page=${resultsPerPage}`);
         const data = await response.json();
+        movies = data.results; // Assign fetched movies to the global variable
         const newSection = createMoviesSection(query, data.total_results, page, resultsPerPage);
-        displaySearchMovies(data.results, newSection.querySelector('#movies'), resultsPerPage);
+        displaySearchMovies(movies, newSection.querySelector('#movies'), resultsPerPage);
     } catch (error) {
         console.error('Error fetching movies:', error);
     }
@@ -64,18 +66,48 @@ const createMoviesSection = (query, numResults, page, resultsPerPage) => {
     const section = document.createElement('section');
     section.className = 'searched-movies';
     const totalPages = Math.ceil(numResults / resultsPerPage);
+
     section.innerHTML = `
         <div class="container mx-auto p-4">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-sm sm:text-xl font-semibold">Search results for "${query}" (${numResults} results)</h3>
-                <div class="flex items-center">
-                    <label for="results-per-page" class="mr-2 hidden sm:block">Results per page:</label>
-                    <select id="results-per-page" class="bg-gray-800 border border-gray-300 rounded-md px-2 py-1">
-                        <option value="5">5</option>
-                        <option value="10">10</option>
-                        <option value="15">15</option>
-                        <option value="20">20</option>
+            <div class="grid items-center justify-between mb-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm sm:text-xl font-semibold">Search results for "${query}" (${numResults} results)</h3>
+                    <div class="flex items-center">
+                        <label for="results-per-page" class="mr-2 hidden sm:block">Results per page:</label>
+                        <select id="results-per-page" class="bg-gray-800 border border-gray-300 rounded-md px-2 py-1">
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="15">15</option>
+                            <option value="20">20</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid md:grid-flow-col items-center gap-4">
+                    <input type="text" id="filter-input" class="bg-gray-800 border border-gray-300 rounded-md px-2 py-1 ml-2" placeholder="keywords">
+                    <select id="filter-genre" class="bg-gray-800 border border-gray-300 rounded-md px-2 py-1 ml-2">
+                        <option value="">All Genres</option>
+                        <option value="28">Action</option>
+                        <option value="12">Adventure</option>
+                        <option value="16">Animation</option>
+                        <option value="35">Comedy</option>
+                        <option value="80">Crime</option>
+                        <option value="99">Documentary</option>
+                        <option value="18">Drama</option>
+                        <option value="10751">Family</option>
+                        <option value="14">Fantasy</option>
+                        <option value="36">History</option>
+                        <option value="27">Horror</option>
+                        <option value="10402">Music</option>
+                        <option value="9648">Mystery</option>
+                        <option value="10749">Romance</option>
+                        <option value="878">Science Fiction</option>
+                        <option value="10770">TV Movie</option>
+                        <option value="53">Thriller</option>
+                        <option value="10752">War</option>
+                        <option value="37">Western</option>
                     </select>
+                    <input type="number" id="filter-year" class="bg-gray-800 border border-gray-300 rounded-md px-2 py-1 ml-2" placeholder="Year">
+                    <input type="number" id="filter-rate" class="bg-gray-800 border border-gray-300 rounded-md px-2 py-1 ml-2" placeholder="Rate" min="0" max="10" step="0.1">
                 </div>
             </div>
             <div id="movies" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3"></div>
@@ -86,6 +118,7 @@ const createMoviesSection = (query, numResults, page, resultsPerPage) => {
             </div>
         </div>
     `;
+
     mainElement.appendChild(section);
 
     // Set the selected value of the results-per-page dropdown
@@ -113,6 +146,27 @@ const createMoviesSection = (query, numResults, page, resultsPerPage) => {
         searchMovies(query, currentPage, resultsPerPage);
     });
 
+    // Add event listener for filter input
+    const filterMovies = () => {
+        const filterGenre = section.querySelector('#filter-genre').value;
+        const filterYear = section.querySelector('#filter-year').value;
+        const filterRate = section.querySelector('#filter-rate').value;
+
+        const filteredMovies = movies.filter(movie => {
+            const matchesGenre = !filterGenre || movie.genre_ids.includes(parseInt(filterGenre));
+            const matchesYear = !filterYear || new Date(movie.release_date).getFullYear() === parseInt(filterYear);
+            const matchesRate = !filterRate || movie.vote_average >= parseFloat(filterRate);
+
+            return matchesGenre && matchesYear && matchesRate;
+        });
+
+        displaySearchMovies(filteredMovies, section.querySelector('#movies'), resultsPerPage);
+    };
+
+    section.querySelector('#filter-genre').addEventListener('change', filterMovies);
+    section.querySelector('#filter-year').addEventListener('input', filterMovies);
+    section.querySelector('#filter-rate').addEventListener('input', filterMovies);
+
     return section;
 };
 
@@ -121,6 +175,23 @@ const displaySearchMovies = (movies, container, resultsPerPage) => {
     container.innerHTML = movies.slice(0, resultsPerPage).map(createMovieCard).join('');
 };
 
+// Function to get query parameters from URL
+const getQueryParams = () => {
+    const params = new URLSearchParams(window.location.search);
+    return {
+        query: params.get('query') || '',
+        page: parseInt(params.get('page')) || 1,
+        resultsPerPage: parseInt(params.get('resultsPerPage')) || 5
+    };
+};
+
+// On page load, fetch and display movies based on URL query parameters
+window.addEventListener('load', () => {
+    const { query, page, resultsPerPage } = getQueryParams();
+    if (query) {
+        searchMovies(query, page, resultsPerPage);
+    }
+});
 
 //****************************************************************************************************************************************************
 //                                                                 Featured Movies                                                                   *
