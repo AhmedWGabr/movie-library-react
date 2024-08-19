@@ -30,23 +30,14 @@
                         </button>
                     </div>
                     <!-- Logo -->
-                    <div class="text-xl font-bold flex items-center">
-                        <img src="./src/images/logo64x64.png" alt="Logo" class="mr-2">
-                        <h2 class="pt-2 font-bold text-4xl font-bebas-neue hidden sm:block ">MOVIES LIBRARY</h2>
-                    </div>
+                    <a href="./index.html">
+                        <div class="text-xl font-bold flex items-center">
+                            <img src="./src/images/logo64x64.png" alt="Logo" class="mr-2">
+                            <h2 class="pt-2 font-bold text-4xl font-bebas-neue hidden sm:block ">MOVIES LIBRARY</h2>
+                        </div>
+                    </a>
+    
                 </div>
-
-                <!-- Middle Section: Navigation Links -->
-                <div class="hidden lg:flex items-center space-x-4">
-                    <a href="./index.html"
-                        class="text-white font-bold text-2xl font-bebas-neue rounded hover:bg-gray-700 active:bg-gray-900 p-2">Home</a>
-                    <a href="./movies.html"
-                        class="text-white font-bold text-2xl font-bebas-neue rounded hover:bg-gray-700 active:bg-gray-900 p-2">Movies</a>
-                    <a href="./series.html"
-                        class="text-white font-bold text-2xl font-bebas-neue rounded hover:bg-gray-700 active:bg-gray-900 p-2">TV
-                        Shows</a>
-                </div>
-
                 <!-- Right Section: Search Bar and Wishlist Icon -->
                 <div class="flex items-center">
                     <!-- Search Bar -->
@@ -57,7 +48,7 @@
                             <button type="submit" class="ml-2 p-2 bg-blue-500 hover:bg-blue-700 rounded">Search</button>
                         </form>
                     </div>
-
+    
                     <!-- Wishlist Icon -->
                     <div class="text-xl">
                         <a href="./wishlist.html" class="wishlist-icon text-2xl font-bebas-neue">❤️ <span
@@ -65,26 +56,15 @@
                     </div>
                 </div>
             </div>
-
+    
             <!-- Dropdown Menu Content -->
             <div id="dropdown-menu" class="hidden xl:hidden">
                 <div class="p-4">
-                    <!-- Navigation Links for Small Screens -->
-                    <div class="flex flex-col space-y-2 mb-4">
-                        <a href="./index.html"
-                            class="text-white font-bold text-center text-2xl font-bebas-neue rounded hover:bg-gray-700 active:bg-gray-900 p-2">Home</a>
-                        <a href="./movies.html"
-                            class="text-white font-bold text-center text-2xl font-bebas-neue rounded hover:bg-gray-700 active:bg-gray-900 p-2">Movies</a>
-                        <a href="./series.html"
-                            class="text-white font-bold text-center text-2xl font-bebas-neue rounded hover:bg-gray-700 active:bg-gray-900 p-2">TV
-                            Shows</a>
-                    </div>
                     <!-- Search Bar for Small Screens -->
                     <form id="search-form">
                         <input type="text" id="query" class="p-2 text-black w-full rounded"
                             placeholder="Search for movies...">
-                        <button type="submit"
-                            class="mt-2 p-2 bg-blue-500 hover:bg-blue-700 w-full rounded">Search</button>
+                        <button type="submit" class="mt-2 p-2 bg-blue-500 hover:bg-blue-700 w-full rounded">Search</button>
                     </form>
                 </div>
             </div>
