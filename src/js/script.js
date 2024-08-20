@@ -8,7 +8,7 @@ const currentcurrentPage = document.body.getAttribute('data-page');
 //****************************************************************************************************************************************************
 
 let currentPage = 1;
-let resultsPerPage = 5;
+let resultsPerPage = 20;
 let movies = []; // Define movies globally
 
 // Function to remove sections inside the main element
