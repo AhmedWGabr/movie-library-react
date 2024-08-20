@@ -405,7 +405,7 @@ if (currentcurrentPage === 'movie-details') {
                                 <p class="text-gray-700 mb-4">${movieDetails.overview}</p>
                             </div>
                             <div class="aspect-w-16 aspect-h-9 mb-4">
-                                <iframe class="w-fit h-full" src="https://www.youtube.com/embed/${movieDetails.videos.results[0].key}" frameborder="0" allowfullscreen></iframe>
+                                ${movieDetails.videos.results.length > 0 ? `<iframe class="w-fit h-full" src="https://www.youtube.com/embed/${movieDetails.videos.results[0].key}" frameborder="0" allowfullscreen></iframe>` : ''}
                             </div>
                         </div>
                     </div>
