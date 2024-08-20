@@ -6,10 +6,10 @@ const currentcurrentPage = document.body.getAttribute('data-page');
 //****************************************************************************************************************************************************
 //                                                               Search Functionality                                                                *
 //****************************************************************************************************************************************************
-
 let currentPage = 1;
 let resultsPerPage = 20;
 let movies = []; // Define movies globally
+let filteredMovies = []; // Define filtered movies globally
 
 // Function to remove sections inside the main element
 const removeSections = () => {
@@ -53,8 +53,9 @@ const searchMovies = async (query, page = 1, resultsPerPage = 10) => {
         const response = await fetch(`${BASE_URL}/search/movie?api_key=${API_KEY}&query=${query}&page=${page}&per_page=${resultsPerPage}`);
         const data = await response.json();
         movies = data.results; // Assign fetched movies to the global variable
+        filteredMovies = movies; // Initialize filteredMovies with all movies
         const newSection = createMoviesSection(query, data.total_results, page, resultsPerPage);
-        displaySearchMovies(movies, newSection.querySelector('#movies'), resultsPerPage);
+        displaySearchMovies(filteredMovies, newSection.querySelector('#movies'), resultsPerPage);
     } catch (error) {
         console.error('Error fetching movies:', error);
     }
@@ -71,7 +72,7 @@ const createMoviesSection = (query, numResults, page, resultsPerPage) => {
         <div class="container mx-auto p-4">
             <div class="grid items-center justify-between mb-4">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-sm sm:text-xl font-semibold">Search results for "${query}" (${numResults} results)</h3>
+                    <h3 id="search-results-header" class="text-sm sm:text-xl font-semibold">Search results for "${query}" (${numResults} results)</h3>
                     <div class="flex items-center">
                         <label for="results-per-page" class="mr-2 hidden sm:block">Results per page:</label>
                         <select id="results-per-page" class="bg-gray-800 border border-gray-300 rounded-md px-2 py-1">
@@ -128,14 +129,14 @@ const createMoviesSection = (query, numResults, page, resultsPerPage) => {
     section.querySelector('#prev-page').addEventListener('click', () => {
         if (page > 1) {
             currentPage--;
-            searchMovies(query, currentPage, resultsPerPage);
+            displaySearchMovies(filteredMovies, section.querySelector('#movies'), resultsPerPage);
         }
     });
 
     section.querySelector('#next-page').addEventListener('click', () => {
         if (page < totalPages) {
             currentPage++;
-            searchMovies(query, currentPage, resultsPerPage);
+            displaySearchMovies(filteredMovies, section.querySelector('#movies'), resultsPerPage);
         }
     });
 
@@ -143,7 +144,7 @@ const createMoviesSection = (query, numResults, page, resultsPerPage) => {
     section.querySelector('#results-per-page').addEventListener('change', (event) => {
         resultsPerPage = parseInt(event.target.value);
         currentPage = 1; // Reset to first page on results per page change
-        searchMovies(query, currentPage, resultsPerPage);
+        displaySearchMovies(filteredMovies, section.querySelector('#movies'), resultsPerPage);
     });
 
     // Add event listener for filter input
@@ -152,13 +153,17 @@ const createMoviesSection = (query, numResults, page, resultsPerPage) => {
         const filterYear = section.querySelector('#filter-year').value;
         const filterRate = section.querySelector('#filter-rate').value;
 
-        const filteredMovies = movies.filter(movie => {
+        filteredMovies = movies.filter(movie => {
             const matchesGenre = !filterGenre || movie.genre_ids.includes(parseInt(filterGenre));
             const matchesYear = !filterYear || new Date(movie.release_date).getFullYear() === parseInt(filterYear);
             const matchesRate = !filterRate || movie.vote_average >= parseFloat(filterRate);
 
             return matchesGenre && matchesYear && matchesRate;
         });
+
+        // Update search results header
+        const searchResultsHeader = section.querySelector('#search-results-header');
+        searchResultsHeader.textContent = `Search results for "${query}" (${filteredMovies.length} results)`;
 
         displaySearchMovies(filteredMovies, section.querySelector('#movies'), resultsPerPage);
     };
@@ -172,7 +177,20 @@ const createMoviesSection = (query, numResults, page, resultsPerPage) => {
 
 // Function to display movies in a container element
 const displaySearchMovies = (movies, container, resultsPerPage) => {
-    container.innerHTML = movies.slice(0, resultsPerPage).map(createMovieCard).join('');
+    const totalPages = Math.ceil(movies.length / resultsPerPage);
+    const startIndex = (currentPage - 1) * resultsPerPage;
+    const endIndex = startIndex + resultsPerPage;
+    const paginatedMovies = movies.slice(startIndex, endIndex);
+
+    container.innerHTML = paginatedMovies.map(createMovieCard).join('');
+
+    // Update pagination info
+    const pageInfo = document.querySelector('#page-info');
+    pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+
+    // Enable/disable pagination buttons
+    document.querySelector('#prev-page').disabled = currentPage === 1;
+    document.querySelector('#next-page').disabled = currentPage >= totalPages;
 };
 
 // Function to get query parameters from URL
