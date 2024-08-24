@@ -50,11 +50,21 @@ synchronizeSearchInputs('query', 'query-sm');
 const searchMovies = async (query, page = 1, resultsPerPage = 10) => {
     removeSections();
     try {
-        const response = await fetch(`${BASE_URL}/search/movie?api_key=${API_KEY}&query=${query}&page=${page}&per_page=${resultsPerPage}`);
-        const data = await response.json();
-        movies = data.results; // Assign fetched movies to the global variable
-        filteredMovies = movies; // Initialize filteredMovies with all movies
-        const newSection = createMoviesSection(query, data.total_results, page, resultsPerPage);
+        let allMovies = [];
+        let totalPages = 1;
+        let currentPage = page;
+
+        do {
+            const response = await fetch(`${BASE_URL}/search/movie?api_key=${API_KEY}&query=${query}&page=${currentPage}`);
+            const data = await response.json();
+            allMovies = allMovies.concat(data.results);
+            totalPages = data.total_pages;
+            currentPage++;
+        } while (currentPage <= totalPages);
+
+        movies = allMovies; // Assign all fetched movies to the global variable
+        filteredMovies = movies; // Initially, filteredMovies is the same as movies
+        const newSection = createMoviesSection(query, allMovies.length, page, resultsPerPage);
         displaySearchMovies(filteredMovies, newSection.querySelector('#movies'), resultsPerPage);
     } catch (error) {
         console.error('Error fetching movies:', error);
@@ -149,28 +159,27 @@ const createMoviesSection = (query, numResults, page, resultsPerPage) => {
 
     // Add event listener for filter input
     const filterMovies = () => {
-        const filterGenre = section.querySelector('#filter-genre').value;
-        const filterYear = section.querySelector('#filter-year').value;
-        const filterRate = section.querySelector('#filter-rate').value;
+        const genre = document.getElementById('filter-genre').value;
+        const year = document.getElementById('filter-year').value;
+        const rate = document.getElementById('filter-rate').value;
+        const keywords = document.getElementById('filter-input').value.toLowerCase();
 
         filteredMovies = movies.filter(movie => {
-            const matchesGenre = !filterGenre || movie.genre_ids.includes(parseInt(filterGenre));
-            const matchesYear = !filterYear || new Date(movie.release_date).getFullYear() === parseInt(filterYear);
-            const matchesRate = !filterRate || movie.vote_average >= parseFloat(filterRate);
+            const matchesGenre = genre ? movie.genre_ids.includes(parseInt(genre)) : true;
+            const matchesYear = year ? movie.release_date.startsWith(year) : true;
+            const matchesRate = rate ? movie.vote_average >= parseFloat(rate) : true;
+            const matchesKeywords = keywords ? movie.title.toLowerCase().includes(keywords) || movie.overview.toLowerCase().includes(keywords) : true;
 
-            return matchesGenre && matchesYear && matchesRate;
+            return matchesGenre && matchesYear && matchesRate && matchesKeywords;
         });
 
-        // Update search results header
-        const searchResultsHeader = section.querySelector('#search-results-header');
-        searchResultsHeader.textContent = `Search results for "${query}" (${filteredMovies.length} results)`;
-
-        displaySearchMovies(filteredMovies, section.querySelector('#movies'), resultsPerPage);
+        displaySearchMovies(filteredMovies, document.querySelector('#movies'), resultsPerPage);
     };
 
     section.querySelector('#filter-genre').addEventListener('change', filterMovies);
     section.querySelector('#filter-year').addEventListener('input', filterMovies);
     section.querySelector('#filter-rate').addEventListener('input', filterMovies);
+    section.querySelector('#filter-input').addEventListener('input', filterMovies);
 
     return section;
 };
