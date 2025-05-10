@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+// import { motion } from 'framer-motion'; // Removed framer-motion
 import { IMG_URL } from '@/lib/tmdb';
 import { useState, useEffect, useCallback } from 'react';
 import { addToWishlist, removeFromWishlist, isMovieInWishlist, type WishlistMovie } from '@/lib/wishlist';
@@ -31,9 +32,10 @@ interface Movie { // Assuming this interface is consistent
 
 interface RecommendationCardProps {
   movie: Movie;
+  disableInViewAnimation?: boolean;
 }
 
-const RecommendationCard: React.FC<RecommendationCardProps> = ({ movie }) => {
+const RecommendationCard: React.FC<RecommendationCardProps> = ({ movie, disableInViewAnimation = false }) => {
   const posterUrl = movie.poster_path ? `${IMG_URL}${movie.poster_path}` : '/placeholder-image.png';
   const [isInWishlist, setIsInWishlist] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -90,7 +92,9 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({ movie }) => {
   };
 
   return (
-    <div className="group bg-gray-800 rounded-lg shadow-lg hover:shadow-2xl overflow-hidden transform transition-all duration-300 ease-in-out hover:scale-105 relative">
+    <div 
+      className={`group movie-card bg-gray-800 rounded-lg shadow-lg overflow-hidden relative ${!disableInViewAnimation ? 'card-appear' : ''}`}
+    >
       <Link href={`/movie/${movie.id}`} className="block">
         <div className="relative w-full h-72"> {/* Retained h-72 for smaller card */}
           <Image

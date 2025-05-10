@@ -24,6 +24,17 @@ export interface FetchMoviesResponse {
   total_results: number;
 }
 
+// Union type for search results that can be movies or TV shows
+export type MultiSearchResult = (Movie & { media_type: 'movie' }) | (TVShow & { media_type: 'tv' });
+
+export interface FetchMultiSearchResponse {
+  page: number;
+  results: MultiSearchResult[];
+  total_pages: number;
+  total_results: number;
+}
+
+
 // --- TV Show Interfaces ---
 export interface TVShow {
   id: number;
@@ -217,7 +228,7 @@ export const searchMovies = async (
   // region?: string // Example of another potential filter
 ): Promise<FetchMoviesResponse> => {
   try {
-    let url = `${BASE_URL}/search/movie?api_key=${API_KEY}&language=en-US&query=${encodeURIComponent(query)}&page=${page}&include_adult=false`; // Added include_adult=false by default
+    let url = `${BASE_URL}/search/movie?api_key=${API_KEY}&language=en-US&query=${encodeURIComponent(query)}&page=${page}&include_adult=false`;
 
     if (year) { // Note: 'year' in search is for matching release year of movies in query
       url += `&year=${year}`;
@@ -244,6 +255,35 @@ export const searchMovies = async (
     return data;
   } catch (error) {
     console.error("Failed to search movies:", error);
+    return { page: 1, results: [], total_pages: 1, total_results: 0 };
+  }
+};
+
+export const searchTvShows = async (
+  query: string,
+  page: number = 1,
+  firstAirDateYear?: number // Filter by first air date year
+): Promise<FetchTVShowsResponse> => {
+  try {
+    let url = `${BASE_URL}/search/tv?api_key=${API_KEY}&language=en-US&query=${encodeURIComponent(query)}&page=${page}&include_adult=false`;
+
+    if (firstAirDateYear) {
+      url += `&first_air_date_year=${firstAirDateYear}`;
+    }
+    // Other filters like 'year' for general matching are not as straightforward for TV as for movies.
+    // TMDB's /search/tv primarily uses 'first_air_date_year'.
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status} on ${url}`);
+    }
+    const data = await response.json();
+    // Manually add media_type to each result for consistency if needed by consuming components
+    // However, FetchTVShowsResponse expects TVShow[], which doesn't have media_type.
+    // This should be handled by the calling function if it combines results.
+    return data;
+  } catch (error) {
+    console.error("Failed to search TV shows:", error);
     return { page: 1, results: [], total_pages: 1, total_results: 0 };
   }
 };
@@ -407,6 +447,22 @@ export interface ReleaseDatesResponse {
   results: ReleaseDatesOnCountry[];
 }
 
+export interface ImageFile {
+  aspect_ratio: number;
+  height: number;
+  iso_639_1: string | null;
+  file_path: string;
+  vote_average: number;
+  vote_count: number;
+  width: number;
+}
+
+export interface ImagesResponse {
+  backdrops: ImageFile[];
+  posters: ImageFile[];
+  logos?: ImageFile[]; // Optional, as not always present or used
+}
+
 export interface MovieDetails extends Movie {
   genres: Genre[];
   runtime: number | null;
@@ -419,6 +475,7 @@ export interface MovieDetails extends Movie {
   reviews?: ReviewsResponse; // Appended response
   recommendations?: FetchMoviesResponse; // Appended response for similar movies
   release_dates?: ReleaseDatesResponse; // Added for content ratings
+  images?: ImagesResponse; // Added for movie images
 }
 
 
@@ -434,7 +491,26 @@ export interface TVShowDetails extends TVShow {
   // videos?: VideosResponse;
   // credits?: Credits;
   // reviews?: ReviewsResponse;
-  // recommendations?: FetchTVShowsResponse;
+  videos?: VideosResponse;
+  aggregate_credits?: Credits; // Use aggregate_credits for TV shows for overall cast/crew
+  reviews?: ReviewsResponse;
+  recommendations?: FetchTVShowsResponse;
+  content_ratings?: ContentRatingsResponse; // For TV show ratings
+  // combined_credits?: PersonCombinedCredits; // This is usually for a person's credits, not a TV show's own details
+}
+
+export interface ContentRating {
+  iso_3166_1: string;
+  rating: string;
+}
+
+export interface ContentRatingsResponse {
+  results: ContentRating[];
+}
+
+export interface PersonCombinedCredits {
+  cast: (Movie & { media_type: 'movie' })[] | (TVShow & { media_type: 'tv' })[];
+  crew: (Movie & { media_type: 'movie' })[] | (TVShow & { media_type: 'tv' })[];
 }
 
 
@@ -443,7 +519,7 @@ export interface TVShowDetails extends TVShow {
 export const fetchMovieDetails = async (movieId: number): Promise<MovieDetails | null> => {
   try {
     const response = await fetch(
-      `${BASE_URL}/movie/${movieId}?api_key=${API_KEY}&language=en-US&append_to_response=videos,credits,reviews,recommendations,release_dates`
+      `${BASE_URL}/movie/${movieId}?api_key=${API_KEY}&language=en-US&append_to_response=videos,credits,reviews,recommendations,release_dates,images`
     );
     if (!response.ok) {
       console.error(`HTTP error! status: ${response.status} for movie ID ${movieId}`);
@@ -458,3 +534,48 @@ export const fetchMovieDetails = async (movieId: number): Promise<MovieDetails |
 };
 
 // Individual fetch functions (can be used if not using append_to_response or for more specific needs)
+
+export interface PersonDetails extends Person {
+  biography: string | null;
+  birthday: string | null;
+  deathday: string | null;
+  place_of_birth: string | null;
+  // Add other fields you need, e.g., images, tagged_images
+  combined_credits: PersonCombinedCredits; // To get movies and TV shows they are known for
+  // also_known_as: string[];
+  // homepage: string | null;
+}
+
+export const fetchPersonDetails = async (personId: number): Promise<PersonDetails | null> => {
+  try {
+    const response = await fetch(
+      `${BASE_URL}/person/${personId}?api_key=${API_KEY}&language=en-US&append_to_response=combined_credits`
+    );
+    if (!response.ok) {
+      console.error(`HTTP error! status: ${response.status} for person ID ${personId}`);
+      return null;
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error(`Failed to fetch details for person ID ${personId}:`, error);
+    return null;
+  }
+};
+
+export const fetchTVShowDetails = async (seriesId: number): Promise<TVShowDetails | null> => {
+  try {
+    const response = await fetch(
+      `${BASE_URL}/tv/${seriesId}?api_key=${API_KEY}&language=en-US&append_to_response=videos,aggregate_credits,reviews,recommendations,content_ratings`
+    );
+    if (!response.ok) {
+      console.error(`HTTP error! status: ${response.status} for TV series ID ${seriesId}`);
+      return null;
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error(`Failed to fetch details for TV series ID ${seriesId}:`, error);
+    return null;
+  }
+};

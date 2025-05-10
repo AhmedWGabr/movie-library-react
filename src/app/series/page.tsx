@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic'; // Opt into dynamic rendering
 
-import { discoverTVShows, TVShow, Movie } from '@/lib/tmdb'; // Movie is used by MovieCard
+import { discoverTVShows, TVShow } from '@/lib/tmdb'; // Movie is used by MovieCard
 import MovieCard from '@/components/MovieCard';
 import PageTransitionWrapper from '@/components/PageTransitionWrapper';
 
@@ -10,10 +10,11 @@ export const metadata = {
 };
 
 // Helper function to safely parse current page from searchParams
-function getCurrentPage(searchParams: { page?: string } | undefined): number {
+function getCurrentPage(searchParams: {  [key: string]: string | string[] | undefined }): number {
   let page = 1;
-  if (searchParams && typeof searchParams.page === 'string') {
-    const pageNum = Number(searchParams.page);
+  const pageQueryParam = searchParams.page;
+  if (typeof pageQueryParam === 'string') {
+    const pageNum = Number(pageQueryParam);
     if (!isNaN(pageNum) && pageNum > 0 && Number.isInteger(pageNum)) {
       page = pageNum;
     }
@@ -21,7 +22,8 @@ function getCurrentPage(searchParams: { page?: string } | undefined): number {
   return page;
 }
 
-export default async function SeriesPage({ searchParams }: { searchParams?: { page?: string } }) {
+export default async function SeriesPage({ searchParams: searchParamsPromise }: { searchParams: { [key: string]: string | string[] | undefined } }) {
+  const searchParams = await searchParamsPromise; // Await the searchParams object
   const currentPage = getCurrentPage(searchParams);
   // Sort by popularity, can add more sorting/filtering options later
   const tvShowsData = await discoverTVShows(currentPage, 'popularity.desc');
@@ -38,16 +40,17 @@ export default async function SeriesPage({ searchParams }: { searchParams?: { pa
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {series.map((show) => {
-                // Adapt TVShow to Movie like structure for MovieCard
+                // Adapt TVShow to fit MultiSearchResult for MovieCard
                 const cardItem = {
-                  id: show.id,
-                  title: show.name, // MovieCard expects 'title'
-                  poster_path: show.poster_path,
-                  release_date: show.first_air_date, // MovieCard expects 'release_date'
-                  overview: show.overview,
-                  vote_average: show.vote_average,
-                  // Add any other properties MovieCard might need or handle them in MovieCard
-                } as Movie; // Cast to Movie for MovieCard compatibility
+                  ...show, // Spread existing TVShow properties
+                  title: show.name, // MovieCard might expect 'title' (MultiSearchResult specifices 'name' for TV)
+                  name: show.name, // Ensure name is present for TV type in MultiSearchResult
+                  release_date: show.first_air_date, // MovieCard might expect 'release_date' (MultiSearchResult specifices 'first_air_date' for TV)
+                  first_air_date: show.first_air_date, // Ensure first_air_date is present
+                  media_type: "tv" as const, // Add media_type
+                };
+                // The MovieCard prop 'movie' expects MultiSearchResult.
+                // We are ensuring cardItem conforms to the TVShow part of MultiSearchResult.
                 return <MovieCard key={show.id} movie={cardItem} disableInViewAnimation={true} />;
               })}
             </div>

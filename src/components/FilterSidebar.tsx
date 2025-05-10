@@ -10,6 +10,7 @@ export interface Filters {
   primaryReleaseDateLte?: string; // YYYY string from select
   voteAverageGte?: number;
   voteAverageLte?: number;
+  mediaType?: 'all' | 'movie' | 'tv'; // Added mediaType
 }
 
 interface FilterSidebarProps {
@@ -37,6 +38,12 @@ for (let y = LATEST_YEAR; y >= EARLIEST_YEAR; y--) {
 }
 
 const ratingValues: number[] = Array.from({ length: 10 }, (_, i) => i + 1); // 1 to 10
+
+const mediaTypeOptions: { value: 'all' | 'movie' | 'tv'; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'movie', label: 'Movies' },
+  { value: 'tv', label: 'TV Shows' },
+];
 
 interface SideScrollPickerProps {
   label: string;
@@ -182,6 +189,21 @@ const FilterSidebar = ({ genres, initialFilters, onFilterChange, isSearchActive 
   return (
     <aside className="w-full md:w-64 lg:w-72 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg shadow">
       <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Filters</h3>
+
+      {/* Media Type Picker */}
+      <div className="mb-4">
+        <SideScrollPicker
+          label="Media Type"
+          name="mediaType"
+          options={mediaTypeOptions.map(opt => opt.label)} // Pass labels for display
+          selectedValue={mediaTypeOptions.find(opt => opt.value === currentFilters.mediaType)?.label || mediaTypeOptions[0].label}
+          onSelect={(label) => {
+            const selectedOption = mediaTypeOptions.find(opt => opt.label === label);
+            handleFilterValueChange('mediaType', selectedOption ? selectedOption.value : 'all');
+          }}
+          allowAny={false} // "All" is an explicit option
+        />
+      </div>
 
       {/* Sort By Dropdown + Toggle Button */}
       <div className={`mb-6 ${isSearchActive ? 'opacity-50 cursor-not-allowed' : ''}`}>

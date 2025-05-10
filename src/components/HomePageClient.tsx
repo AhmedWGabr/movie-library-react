@@ -24,27 +24,29 @@ const renderSection = (title: string, items: (Movie | TVShow | Person)[], itemTy
       <h2 className="text-3xl font-bold font-montserrat mb-8 text-center sm:text-left"> {/* Font was changed to montserrat */}
         {title}
       </h2>
-      {/* Fade effect for left side - assuming body bg is dark (e.g. gray-900 or tmdb-dark-blue) */}
-      <div className="absolute inset-y-0 left-0 w-12 md:w-16 bg-gradient-to-r from-gray-900 to-transparent pointer-events-none z-10"></div> {/* Adjusted from-[#0a0a0a] to from-gray-900 to match layout body */}
+      {/* Fade effect for left side - now theme-aware */}
+      <div className="absolute inset-y-0 left-0 w-12 md:w-16 bg-gradient-to-r from-theme-bg-light dark:from-theme-bg-dark to-transparent pointer-events-none z-10"></div>
       <div className="flex overflow-x-auto py-4 gap-4 scrollbar-thin pl-4 pr-4">
         {items.map((item) => (
           <div key={item.id} className="w-40 md:w-48 flex-shrink-0">
             {itemType === 'person' ? (
               <PersonCard person={item as Person} />
             ) : (
+              // Construct the correct MultiSearchResult type based on itemType
               <MovieCard
-                movie={{
-                  ...item,
-                  title: (item as Movie).title || (item as TVShow).name,
-                  release_date: (item as Movie).release_date || (item as TVShow).first_air_date,
-                } as Movie}
+                movie={
+                  itemType === 'movie'
+                    ? { ...(item as Movie), media_type: 'movie' as const }
+                    : { ...(item as TVShow), media_type: 'tv' as const }
+                }
+                disableInViewAnimation={true} // Disable animation as requested
               />
             )}
           </div>
         ))}
       </div>
-      {/* Fade effect for right side */}
-      <div className="absolute inset-y-0 right-0 w-12 md:w-16 bg-gradient-to-l from-gray-900 to-transparent pointer-events-none z-10"></div> {/* Adjusted from-[#0a0a0a] to from-gray-900 */}
+      {/* Fade effect for right side - now theme-aware */}
+      <div className="absolute inset-y-0 right-0 w-12 md:w-16 bg-gradient-to-l from-theme-bg-light dark:from-theme-bg-dark to-transparent pointer-events-none z-10"></div>
     </section>
   );
 };
@@ -79,7 +81,7 @@ const HomePageClient = ({
   return (
     <>
       {/* Hero Section */}
-      <section className="bg-tmdb-dark-blue text-white py-16 px-4 sm:py-24 lg:py-32">
+      <section className="bg-tmdb-accent text-tmdb-dark-blue py-16 px-4 sm:py-24 lg:py-32">
         <div className="container mx-auto text-center">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold mb-4">
             Welcome.
@@ -93,12 +95,12 @@ const HomePageClient = ({
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full p-4 text-lg text-gray-900 rounded-l-md focus:outline-none focus:ring-2 focus:ring-tmdb-accent"
+                className="w-full p-4 text-lg text-gray-900 bg-white rounded-l-md focus:outline-none focus:ring-2 focus:ring-tmdb-accent"
                 placeholder="Search for a movie, tv show, person......"
               />
               <button
                 type="submit"
-                className="bg-tmdb-accent hover:bg-opacity-80 text-white p-4 text-lg font-semibold rounded-r-md transition-colors duration-300"
+                className="bg-white hover:bg-gray-200 text-tmdb-accent p-4 text-lg font-semibold rounded-r-md transition-colors duration-300"
               >
                 Search
               </button>

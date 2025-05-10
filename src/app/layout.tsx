@@ -5,6 +5,7 @@ import "./globals.css";
 import Header from "@/components/Header"; // Assuming components are in src/components
 import Footer from "@/components/Footer"; // Assuming components are in src/components
 import PageTransitionWrapper from "@/components/PageTransitionWrapper"; // Import the new wrapper
+import { ThemeProvider } from "@/components/ThemeProvider"; // Import ThemeProvider
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,17 +34,23 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} ${montserrat.variable} antialiased bg-gray-900 text-white flex flex-col min-h-screen`}
+    <html lang="en" suppressHydrationWarning>{/* Add suppressHydrationWarning for next-themes */}<body
+        className={`${geistSans.variable} ${geistMono.variable} ${montserrat.variable} antialiased text-foreground bg-theme-bg-light dark:bg-theme-bg-dark flex flex-col min-h-screen`} // Use theme-aware backgrounds and remove fixed text-white
       >
-        <Header />
-        <PageTransitionWrapper>
-          <main className="flex-grow pt-20 pb-8 container mx-auto px-4"> {/* Added pt-20 for header, pb-8 for spacing, and container styles */}
-            {children}
-          </main>
-        </PageTransitionWrapper>
-        <Footer />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <Header />
+          <PageTransitionWrapper>
+            <main className="flex-grow pt-20 pb-8 container mx-auto px-4"> {/* Added pt-20 for header, pb-8 for spacing, and container styles */}
+              {children}
+            </main>
+          </PageTransitionWrapper>
+          <Footer />
+        </ThemeProvider>
       </body>
     </html>
   );

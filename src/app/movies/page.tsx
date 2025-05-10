@@ -10,22 +10,18 @@ export const metadata = {
   description: 'Browse all movies available in the library.',
 };
 
-// Basic pagination for server components (can be enhanced with searchParams for page number)
-// Helper function to safely parse current page from searchParams
-function getCurrentPage(searchParams: { page?: string } | undefined): number {
-  let page = 1;
-  if (searchParams && typeof searchParams.page === 'string') {
-    const pageNum = Number(searchParams.page);
+// For now, it will just load the first page. A more robust solution would handle page numbers via URL.
+export default async function MoviesPage({ searchParams: searchParamsPromise }: { searchParams: { [key: string]: string | string[] | undefined } }) {
+  const searchParams = await searchParamsPromise; // Await the searchParams object
+  let currentPage = 1;
+  const pageQueryParam = searchParams.page; // searchParams is now guaranteed to be an object
+
+  if (typeof pageQueryParam === 'string') {
+    const pageNum = Number(pageQueryParam);
     if (!isNaN(pageNum) && pageNum > 0 && Number.isInteger(pageNum)) {
-      page = pageNum;
+      currentPage = pageNum;
     }
   }
-  return page;
-}
-
-// For now, it will just load the first page. A more robust solution would handle page numbers via URL.
-export default async function MoviesPage({ searchParams }: { searchParams?: { page?: string } }) {
-  const currentPage = getCurrentPage(searchParams);
   const moviesData = await discoverMovies(currentPage, 'popularity.desc'); // Sort by popularity
   const movies: Movie[] = moviesData.results;
   // const totalPages = moviesData.total_pages; // For pagination controls
@@ -41,7 +37,11 @@ export default async function MoviesPage({ searchParams }: { searchParams?: { pa
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {movies.map((movie) => (
-                <MovieCard key={movie.id} movie={movie} disableInViewAnimation={true} />
+                <MovieCard 
+                  key={movie.id} 
+                  movie={{ ...movie, media_type: "movie" as const }} 
+                  disableInViewAnimation={true} 
+                />
               ))}
             </div>
             {/* 

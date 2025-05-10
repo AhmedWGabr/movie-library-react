@@ -1,6 +1,7 @@
 import type { Config } from 'tailwindcss';
 
 const config: Config = {
+  darkMode: 'class', // Enable class-based dark mode
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
@@ -13,6 +14,8 @@ const config: Config = {
         'tmdb-accent': '#01b4e4',    // TMDB's teal/cyan accent
         'tmdb-light-blue': '#01b4e4', // Often used for highlights or primary actions
         'tmdb-green': '#1ed5a9',     // Accent green for ratings or positive actions
+        'theme-bg-light': '#ffffff', // Light theme background from globals.css
+        'theme-bg-dark': '#0a0a0a',   // Dark theme background from globals.css (assuming #0a0a0af3 is #0a0a0a)
       },
       fontFamily: {
         // TMDB uses "Source Sans Pro", but we'll stick to Tailwind defaults or project specific fonts for now

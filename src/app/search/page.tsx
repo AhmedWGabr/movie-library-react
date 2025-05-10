@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, FormEvent, ChangeEvent, useCallback, useRef } from 'react'; // Added useRef
+import { useState, useEffect, FormEvent, ChangeEvent, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Movie, searchMovies, discoverMovies, Genre, fetchMovieGenres } from '@/lib/tmdb';
+import { Movie, TVShow, searchMovies, discoverMovies, Genre, fetchMovieGenres, searchTvShows, discoverTVShows, MultiSearchResult } from '@/lib/tmdb'; // Corrected TvShow to TVShow and discoverTvShows to discoverTVShows
 import MovieCard from '@/components/MovieCard';
 import FilterSidebar, { Filters as FilterOptions } from '@/components/FilterSidebar';
+// import TvShowCard from '@/components/TvShowCard'; // Placeholder if you create a specific card for TV shows
 
 // Debounce function for query input
 const debounceQuery = (func: (query: string) => void, waitFor: number) => {
@@ -24,13 +25,13 @@ const SearchPage = () => {
   const searchParams = useSearchParams();
 
   const [query, setQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<Movie[]>([]);
+  const [searchResults, setSearchResults] = useState<MultiSearchResult[]>([]); // Changed to MultiSearchResult
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [genres, setGenres] = useState<Genre[]>([]);
-  const [activeFilters, setActiveFilters] = useState<FilterOptions>({ sortBy: 'popularity.desc' }); // Default sort
+  const [activeFilters, setActiveFilters] = useState<FilterOptions>({ sortBy: 'popularity.desc', mediaType: 'all' }); // Default sort and mediaType
   // const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false); // To be removed
   const [showFilterMessage, setShowFilterMessage] = useState(false);
 
@@ -66,14 +67,21 @@ const SearchPage = () => {
     const queryFromUrl = searchParams.get('q') || '';
     const pageFromUrl = Number(searchParams.get('page')) || 1;
     const sortByFromUrl = searchParams.get('sortBy') || 'popularity.desc';
-    const genresFromUrl = searchParams.get('genres')?.split(',') || undefined;
+    let genresFromUrl = searchParams.get('genres')?.split(',') || undefined;
+    const genreIdFromUrl = searchParams.get('genreId'); // Read single genreId
     const gteFromUrl = searchParams.get('gte') || undefined; // Year From (string YYYY)
     const lteFromUrl = searchParams.get('lte') || undefined; // Year To (string YYYY)
     const voteAvgGteFromUrl = searchParams.get('vagte') ? parseFloat(searchParams.get('vagte')!) : undefined;
     const voteAvgLteFromUrl = searchParams.get('valte') ? parseFloat(searchParams.get('valte')!) : undefined;
+    const mediaTypeFromUrl = (searchParams.get('type') as FilterOptions['mediaType']) || 'all';
 
     setQuery(queryFromUrl);
     setCurrentPage(pageFromUrl);
+
+    // If a single genreId is provided and genres (plural) is not, use genreId
+    if (genreIdFromUrl && !genresFromUrl) {
+      genresFromUrl = [genreIdFromUrl];
+    }
     
     const initialFiltersFromUrl: FilterOptions = {
       sortBy: sortByFromUrl,
@@ -82,14 +90,15 @@ const SearchPage = () => {
       primaryReleaseDateLte: lteFromUrl,
       voteAverageGte: voteAvgGteFromUrl,
       voteAverageLte: voteAvgLteFromUrl,
+      mediaType: mediaTypeFromUrl,
     };
     setActiveFilters(initialFiltersFromUrl);
 
     // Perform search/discovery if any relevant param exists
-    if (queryFromUrl || sortByFromUrl !== 'popularity.desc' || genresFromUrl || gteFromUrl || lteFromUrl || voteAvgGteFromUrl !== undefined || voteAvgLteFromUrl !== undefined) {
+    if (queryFromUrl || sortByFromUrl !== 'popularity.desc' || genresFromUrl || gteFromUrl || lteFromUrl || voteAvgGteFromUrl !== undefined || voteAvgLteFromUrl !== undefined || mediaTypeFromUrl !== 'all') {
       performSearch(queryFromUrl, pageFromUrl, initialFiltersFromUrl);
     } else {
-      performSearch("", 1, { sortBy: 'popularity.desc' }); 
+      performSearch("", 1, { sortBy: 'popularity.desc', mediaType: 'all' }); 
       // setSearchResults([]);
     }
   }, [searchParams]); // Removed performSearch from dependencies to avoid re-triggering on its own creation
@@ -109,10 +118,11 @@ const SearchPage = () => {
       filters.primaryReleaseDateGte ||
       filters.primaryReleaseDateLte ||
       filters.voteAverageGte !== undefined ||
-      filters.voteAverageLte !== undefined;
+      filters.voteAverageLte !== undefined ||
+      filters.mediaType !== 'all'; // Added mediaType check
 
-    if (!isActuallySearching && !hasActiveFilters && page === 1 && filters.sortBy === 'popularity.desc') {
-      // Initial load with default sort
+    if (!isActuallySearching && !hasActiveFilters && page === 1 && filters.sortBy === 'popularity.desc' && filters.mediaType === 'all') {
+      // Initial load with default sort and 'all' media type
     } else if (!isActuallySearching && !hasActiveFilters) {
       setSearchResults([]);
       setTotalPages(1);
@@ -131,29 +141,52 @@ const SearchPage = () => {
       if (filters.primaryReleaseDateGte && filters.primaryReleaseDateLte && filters.primaryReleaseDateGte === filters.primaryReleaseDateLte) {
         primaryReleaseYearForSearch = parseInt(filters.primaryReleaseDateGte, 10);
       }
-      // Note: voteAverageGte/Lte are not supported by /search/movie
+      // Note: voteAverageGte/Lte are not supported by /search/movie or /search/tv
 
       if (isActuallySearching) {
-        data = await searchMovies(
-          searchTerm,
-          page,
-          undefined, 
-          primaryReleaseYearForSearch
-        );
-      } else {
-        data = await discoverMovies(
-          page,
-          filters.sortBy,
-          genreString,
-          undefined, 
-          releaseDateGte,
-          releaseDateLte,
-          filters.voteAverageGte,
-          filters.voteAverageLte
-        );
+        // When searching with a query, TMDB's /search/multi endpoint is best if we want movies and TV.
+        // However, for simplicity and to match existing structure, we'll search movies or TV based on mediaType.
+        // If 'all', we might need a more complex solution or default to movies. For now, let's assume 'all' means movies for search.
+        // Or, we could implement /search/multi if that's preferred.
+        // For now, let's stick to separate searches.
+        if (filters.mediaType === 'tv') {
+          data = await searchTvShows(searchTerm, page, primaryReleaseYearForSearch);
+        } else { // 'movie' or 'all' (defaulting 'all' to movies for search query)
+          data = await searchMovies(searchTerm, page, undefined, primaryReleaseYearForSearch);
+        }
+      } else { // Discovering (no search term)
+        if (filters.mediaType === 'tv') {
+          data = await discoverTVShows( 
+            page,
+            filters.sortBy, 
+            genreString,
+            primaryReleaseYearForSearch, // Pass the parsed year for firstAirDateYear
+            releaseDateGte, 
+            releaseDateLte,
+            filters.voteAverageGte,
+            filters.voteAverageLte
+          );
+        } else { // 'movie' or 'all' (defaulting 'all' to movies for discover)
+          data = await discoverMovies(
+            page,
+            filters.sortBy,
+            genreString,
+            primaryReleaseYearForSearch, // Pass the parsed year for primaryReleaseYear
+            releaseDateGte,
+            releaseDateLte,
+            filters.voteAverageGte,
+            filters.voteAverageLte
+          );
+        }
       }
       
-      setSearchResults(data.results);
+      // Add media_type to results if not present, for consistent handling in MovieCard/TvShowCard
+      const resultsWithMediaType = data.results.map((item: Movie | TVShow) => ({ // Added explicit type for item
+        ...item,
+        media_type: (item as MultiSearchResult).media_type || (filters.mediaType === 'tv' ? 'tv' : 'movie')
+      }));
+
+      setSearchResults(resultsWithMediaType as MultiSearchResult[]); // Ensure the final array is of MultiSearchResult[]
       setTotalPages(data.total_pages > 500 ? 500 : data.total_pages); 
       setCurrentPage(data.page);
     } catch (err) {
@@ -190,6 +223,9 @@ const SearchPage = () => {
     if (newFilters.voteAverageLte !== undefined) {
       params.set('valte', String(newFilters.voteAverageLte));
     }
+    if (newFilters.mediaType && newFilters.mediaType !== 'all') {
+      params.set('type', newFilters.mediaType);
+    }
     params.set('page', String(newPage));
     
     const newUrl = `/search?${params.toString()}`;
@@ -199,14 +235,15 @@ const SearchPage = () => {
                                 newFilters.primaryReleaseDateGte ||
                                 newFilters.primaryReleaseDateLte ||
                                 newFilters.voteAverageGte !== undefined ||
-                                newFilters.voteAverageLte !== undefined;
+                                newFilters.voteAverageLte !== undefined ||
+                                (newFilters.mediaType && newFilters.mediaType !== 'all');
 
     if (newQuery.trim() || hasMeaningfulFilters) {
         router.push(newUrl);
-    } else if (newPage > 1) { // if only page changes from 1 with no query/filters
+    } else if (newPage > 1) { // if only page changes from 1 with no query/filters/type
         router.push(newUrl);
     }
-     else if (searchParams.toString() !== '' && !hasMeaningfulFilters && !newQuery.trim()) { // Clearing all filters/query
+     else if (searchParams.toString() !== '' && !hasMeaningfulFilters && !newQuery.trim()) { // Clearing all filters/query/type
         router.push('/search');
     }
 
@@ -226,9 +263,10 @@ const SearchPage = () => {
   const handleFilterChange = (newFiltersFromSidebar: FilterOptions) => {
     // Ensure sortBy always has a value, defaulting to popularity.desc
     const updatedFilters = {
-      ...activeFiltersRef.current,
-      ...newFiltersFromSidebar,
+      ...activeFiltersRef.current, // Keep existing filters
+      ...newFiltersFromSidebar,    // Override with new ones from sidebar
       sortBy: newFiltersFromSidebar.sortBy || activeFiltersRef.current.sortBy || 'popularity.desc',
+      mediaType: newFiltersFromSidebar.mediaType || activeFiltersRef.current.mediaType || 'all', // Ensure mediaType is preserved or defaulted
     };
     setActiveFilters(updatedFilters);
     updateUrlWithFiltersAndQuery(queryRef.current, updatedFilters, 1);
@@ -242,7 +280,15 @@ const SearchPage = () => {
 
   const handlePageChange = (newPage: number) => {
     // Use refs for immediate values
-    if (newPage >= 1 && newPage <= totalPages && (queryRef.current.trim() || Object.values(activeFiltersRef.current).some(f => f !== undefined && f !== 'popularity.desc' && (!Array.isArray(f) || f.length >0 )))) {
+    const hasQuery = queryRef.current.trim();
+    const hasFilters = Object.values(activeFiltersRef.current).some(f => 
+        f !== undefined && 
+        f !== 'popularity.desc' && 
+        f !== 'all' && // Check against default mediaType
+        (!Array.isArray(f) || f.length > 0)
+    );
+
+    if (newPage >= 1 && newPage <= totalPages && (hasQuery || hasFilters)) {
        updateUrlWithFiltersAndQuery(queryRef.current, activeFiltersRef.current, newPage);
     }
   };
@@ -307,9 +353,16 @@ const SearchPage = () => {
             </p>
           )}
           
-          {!isLoading && !error && !query.trim() && Object.values(activeFilters).every(f => f === undefined || (Array.isArray(f) && f.length === 0)) && searchResults.length === 0 && (
+          {!isLoading && !error && !query.trim() && 
+            Object.values(activeFilters).every(f => 
+                f === undefined || 
+                (Array.isArray(f) && f.length === 0) || 
+                f === 'popularity.desc' || // Default sort
+                f === 'all' // Default media type
+            ) && 
+            searchResults.length === 0 && (
             <p className="text-center text-gray-500 dark:text-gray-400 py-10 text-lg">
-              Please enter a search query or apply filters to find movies.
+              Please enter a search query or apply filters to find items.
             </p>
           )}
 
@@ -317,8 +370,10 @@ const SearchPage = () => {
           {searchResults.length > 0 && (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {searchResults.map((movie) => (
-                  <MovieCard key={movie.id} movie={movie} />
+                {searchResults.map((item: MultiSearchResult) => ( // Added explicit type for item
+                  // MovieCard can now potentially handle both movies and TV shows if its props are flexible
+                  // or you can conditionally render MovieCard or TvShowCard based on item.media_type
+                  <MovieCard key={`${item.media_type}-${item.id}`} movie={item} disableInViewAnimation={true} /> 
                 ))}
               </div>
 

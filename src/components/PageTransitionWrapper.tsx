@@ -1,7 +1,7 @@
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
-import { usePathname } from 'next/navigation'; // To get a unique key for transitions
+import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 interface PageTransitionWrapperProps {
   children: React.ReactNode;
@@ -9,20 +9,24 @@ interface PageTransitionWrapperProps {
 
 const PageTransitionWrapper: React.FC<PageTransitionWrapperProps> = ({ children }) => {
   const pathname = usePathname();
+  const [transitionStage, setTransitionStage] = useState('fadeIn');
+
+  useEffect(() => {
+    setTransitionStage('fadeOut');
+    const timer = setTimeout(() => {
+      setTransitionStage('fadeIn');
+    }, 300); // Corresponds to animation duration
+
+    return () => clearTimeout(timer);
+  }, [pathname]);
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.main
-        key={pathname} // Use pathname for a reliable key
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className="pt-20 min-h-screen" // Ensure this class matches your original main element
-      >
-        {children}
-      </motion.main>
-    </AnimatePresence>
+    <main
+      key={pathname}
+      className={`pt-20 min-h-screen page-transition ${transitionStage}`}
+    >
+      {children}
+    </main>
   );
 };
 
