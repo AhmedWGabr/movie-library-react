@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Montserrat, Geist, Geist_Mono } from "next/font/google";
+// import { Montserrat, Geist, Geist_Mono } from "next/font/google";
+import { Montserrat } from "next/font/google"; // Keep Montserrat for now
 // Removed motion and AnimatePresence, they are now in PageTransitionWrapper
 import "./globals.css";
 import Header from "@/components/Header"; // Assuming components are in src/components
@@ -7,15 +8,15 @@ import Footer from "@/components/Footer"; // Assuming components are in src/comp
 import PageTransitionWrapper from "@/components/PageTransitionWrapper"; // Import the new wrapper
 import { ThemeProvider } from "@/components/ThemeProvider"; // Import ThemeProvider
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+// const geistSans = Geist({
+//   variable: "--font-geist-sans",
+//   subsets: ["latin"],
+// });
+//
+// const geistMono = Geist_Mono({
+//   variable: "--font-geist-mono",
+//   subsets: ["latin"],
+// });
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
@@ -35,7 +36,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>{/* Add suppressHydrationWarning for next-themes */}<body
-        className={`${geistSans.variable} ${geistMono.variable} ${montserrat.variable} antialiased text-foreground bg-theme-bg-light dark:bg-theme-bg-dark flex flex-col min-h-screen`} // Use theme-aware backgrounds and remove fixed text-white
+        className={`${montserrat.variable} antialiased text-foreground bg-theme-bg-light dark:bg-theme-bg-dark flex flex-col min-h-screen`} // Use theme-aware backgrounds and remove fixed text-white
       >
         <ThemeProvider
           attribute="class"
