@@ -61,47 +61,6 @@ const SearchPage = () => {
     };
     loadGenres();
   }, []);
-  
-  // Update local state (query, filters, page) from URL search params
-  useEffect(() => {
-    const queryFromUrl = searchParams.get('q') || '';
-    const pageFromUrl = Number(searchParams.get('page')) || 1;
-    const sortByFromUrl = searchParams.get('sortBy') || 'popularity.desc';
-    let genresFromUrl = searchParams.get('genres')?.split(',') || undefined;
-    const genreIdFromUrl = searchParams.get('genreId'); // Read single genreId
-    const gteFromUrl = searchParams.get('gte') || undefined; // Year From (string YYYY)
-    const lteFromUrl = searchParams.get('lte') || undefined; // Year To (string YYYY)
-    const voteAvgGteFromUrl = searchParams.get('vagte') ? parseFloat(searchParams.get('vagte')!) : undefined;
-    const voteAvgLteFromUrl = searchParams.get('valte') ? parseFloat(searchParams.get('valte')!) : undefined;
-    const mediaTypeFromUrl = (searchParams.get('type') as FilterOptions['mediaType']) || 'all';
-
-    setQuery(queryFromUrl);
-    setCurrentPage(pageFromUrl);
-
-    // If a single genreId is provided and genres (plural) is not, use genreId
-    if (genreIdFromUrl && !genresFromUrl) {
-      genresFromUrl = [genreIdFromUrl];
-    }
-    
-    const initialFiltersFromUrl: FilterOptions = {
-      sortBy: sortByFromUrl,
-      withGenres: genresFromUrl,
-      primaryReleaseDateGte: gteFromUrl,
-      primaryReleaseDateLte: lteFromUrl,
-      voteAverageGte: voteAvgGteFromUrl,
-      voteAverageLte: voteAvgLteFromUrl,
-      mediaType: mediaTypeFromUrl,
-    };
-    setActiveFilters(initialFiltersFromUrl);
-
-    // Perform search/discovery if any relevant param exists
-    if (queryFromUrl || sortByFromUrl !== 'popularity.desc' || genresFromUrl || gteFromUrl || lteFromUrl || voteAvgGteFromUrl !== undefined || voteAvgLteFromUrl !== undefined || mediaTypeFromUrl !== 'all') {
-      performSearch(queryFromUrl, pageFromUrl, initialFiltersFromUrl);
-    } else {
-      performSearch("", 1, { sortBy: 'popularity.desc', mediaType: 'all' }); 
-      // setSearchResults([]);
-    }
-  }, [searchParams]); // Removed performSearch from dependencies to avoid re-triggering on its own creation
 
   const performSearch = useCallback(async (
     searchTerm: string,
@@ -198,6 +157,47 @@ const SearchPage = () => {
       setIsLoading(false);
     }
   }, []); // Empty dependency array for useCallback if it doesn't depend on props/state that change outside its scope
+  
+  // Update local state (query, filters, page) from URL search params
+  useEffect(() => {
+    const queryFromUrl = searchParams.get('q') || '';
+    const pageFromUrl = Number(searchParams.get('page')) || 1;
+    const sortByFromUrl = searchParams.get('sortBy') || 'popularity.desc';
+    let genresFromUrl = searchParams.get('genres')?.split(',') || undefined;
+    const genreIdFromUrl = searchParams.get('genreId'); // Read single genreId
+    const gteFromUrl = searchParams.get('gte') || undefined; // Year From (string YYYY)
+    const lteFromUrl = searchParams.get('lte') || undefined; // Year To (string YYYY)
+    const voteAvgGteFromUrl = searchParams.get('vagte') ? parseFloat(searchParams.get('vagte')!) : undefined;
+    const voteAvgLteFromUrl = searchParams.get('valte') ? parseFloat(searchParams.get('valte')!) : undefined;
+    const mediaTypeFromUrl = (searchParams.get('type') as FilterOptions['mediaType']) || 'all';
+
+    setQuery(queryFromUrl);
+    setCurrentPage(pageFromUrl);
+
+    // If a single genreId is provided and genres (plural) is not, use genreId
+    if (genreIdFromUrl && !genresFromUrl) {
+      genresFromUrl = [genreIdFromUrl];
+    }
+    
+    const initialFiltersFromUrl: FilterOptions = {
+      sortBy: sortByFromUrl,
+      withGenres: genresFromUrl,
+      primaryReleaseDateGte: gteFromUrl,
+      primaryReleaseDateLte: lteFromUrl,
+      voteAverageGte: voteAvgGteFromUrl,
+      voteAverageLte: voteAvgLteFromUrl,
+      mediaType: mediaTypeFromUrl,
+    };
+    setActiveFilters(initialFiltersFromUrl);
+
+    // Perform search/discovery if any relevant param exists
+    if (queryFromUrl || sortByFromUrl !== 'popularity.desc' || genresFromUrl || gteFromUrl || lteFromUrl || voteAvgGteFromUrl !== undefined || voteAvgLteFromUrl !== undefined || mediaTypeFromUrl !== 'all') {
+      performSearch(queryFromUrl, pageFromUrl, initialFiltersFromUrl);
+    } else {
+      performSearch("", 1, { sortBy: 'popularity.desc', mediaType: 'all' }); 
+      // setSearchResults([]);
+    }
+  }, [searchParams, performSearch]);
   
   const updateUrlWithFiltersAndQuery = useCallback((newQuery: string, newFilters: FilterOptions, newPage: number = 1) => {
     const params = new URLSearchParams();

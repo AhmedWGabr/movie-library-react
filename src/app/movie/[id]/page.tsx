@@ -9,9 +9,8 @@ interface MovieDetailPageProps {
 }
 
 // generateMetadata remains a server-side function
-export async function generateMetadata({ params: paramsPromise }: MovieDetailPageProps) { // Destructure params directly
-  const params = await paramsPromise; // Await the params object
-  const movieId = parseInt(params.id, 10); // Use params.id
+export async function generateMetadata({ params }: { params: { id: string } }) { // Use inline type
+  const movieId = parseInt(params.id, 10);
   if (isNaN(movieId)) {
     return { title: 'Movie Not Found' };
   }
@@ -28,9 +27,8 @@ export async function generateMetadata({ params: paramsPromise }: MovieDetailPag
 }
 
 // This is now a Server Component
-export default async function MovieDetailPage({ params: paramsPromise }: MovieDetailPageProps) { // Destructure params directly
-  const params = await paramsPromise; // Await the params object
-  const movieId = parseInt(params.id, 10); // Use params.id
+export default async function MovieDetailPage({ params }: { params: { id: string } }) { // Use inline type
+  const movieId = parseInt(params.id, 10);
 
   if (isNaN(movieId)) {
     return (
