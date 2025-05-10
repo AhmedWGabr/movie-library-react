@@ -2,15 +2,12 @@ import { fetchMovieDetails } from '@/lib/tmdb';
 import type { MovieDetails } from '@/lib/tmdb';
 import MovieClientContent from './MovieClientContent'; // Import the new client component
 
-interface MovieDetailPageProps {
-  params: {
-    id: string;
-  };
-}
-
 // generateMetadata remains a server-side function
-export async function generateMetadata({ params }: { params: { id: string } }) { // Use inline type
-  const movieId = parseInt(params.id, 10);
+export async function generateMetadata({ params }: { 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  params: any; // Workaround for Next.js type issue
+}) {
+  const movieId = parseInt((params as { id: string }).id, 10);
   if (isNaN(movieId)) {
     return { title: 'Movie Not Found' };
   }
@@ -27,8 +24,11 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
 }
 
 // This is now a Server Component
-export default async function MovieDetailPage({ params }: { params: { id: string } }) { // Use inline type
-  const movieId = parseInt(params.id, 10);
+export default async function MovieDetailPage({ params }: { 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  params: any; // Workaround for Next.js type issue
+}) {
+  const movieId = parseInt((params as { id: string }).id, 10);
 
   if (isNaN(movieId)) {
     return (

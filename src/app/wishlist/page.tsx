@@ -50,13 +50,19 @@ export default function WishlistPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-          {wishlistMovies.map(movie => (
-            // Ensure the 'movie' object passed to MovieCard matches its expected 'Movie' prop type
-            // The WishlistMovie type should now be compatible after adding optional fields.
-            <MovieCard key={movie.id} movie={movie} /> 
-            // Ideally, ensure WishlistMovie includes all fields MovieCard's Movie prop expects,
-            // or create a mapping function.
-          ))}
+          {wishlistMovies.map(wishlistEntry => {
+            // Adapt WishlistMovie to the MultiSearchResult type expected by MovieCard
+            const movieForCard = {
+              ...wishlistEntry, // Spread existing properties
+              // Ensure required fields for the 'Movie' part of MultiSearchResult are present
+              backdrop_path: wishlistEntry.backdrop_path ?? null,
+              vote_count: wishlistEntry.vote_count ?? 0,
+              overview: wishlistEntry.overview || '', // Ensure overview is a string
+              // genre_ids is optional in Movie type, so not strictly needed unless MovieCard depends on it
+              // media_type is already 'movie' in WishlistMovie type
+            };
+            return <MovieCard key={movieForCard.id} movie={movieForCard} />;
+          })}
         </div>
       )}
     </div>

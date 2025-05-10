@@ -11,10 +11,12 @@ export const metadata = {
 };
 
 // For now, it will just load the first page. A more robust solution would handle page numbers via URL.
-export default async function MoviesPage({ searchParams: searchParamsPromise }: { searchParams: { [key: string]: string | string[] | undefined } }) {
-  const searchParams = await searchParamsPromise; // Await the searchParams object
+export default async function MoviesPage({ searchParams }: { 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  searchParams: any; // Workaround for Next.js type issue
+}) {
   let currentPage = 1;
-  const pageQueryParam = searchParams.page; // searchParams is now guaranteed to be an object
+  const pageQueryParam = (searchParams as { page?: string | string[] | undefined }).page; 
 
   if (typeof pageQueryParam === 'string') {
     const pageNum = Number(pageQueryParam);

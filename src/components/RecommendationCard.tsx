@@ -62,6 +62,10 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({ movie, disableI
       poster_path: movie.poster_path,
       release_date: movie.release_date,
       vote_average: movie.vote_average,
+      overview: movie.overview || '', // Ensure overview is a string
+      backdrop_path: null,           // Assuming not available in this component's Movie prop
+      vote_count: 0,                 // Assuming not available in this component's Movie prop
+      media_type: 'movie',
     };
 
     if (isInWishlist) {

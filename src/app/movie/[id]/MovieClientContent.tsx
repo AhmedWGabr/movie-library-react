@@ -98,8 +98,12 @@ export default function MovieClientContent({ initialMovie, movieId: receivedMovi
       id: movie.id,
       title: movie.title,
       poster_path: movie.poster_path,
-      release_date: movie.release_date || '',
-      vote_average: movie.vote_average || 0,
+      release_date: movie.release_date || '', // Ensure release_date is a string
+      vote_average: movie.vote_average || 0,  // Ensure vote_average is a number
+      overview: movie.overview || '',         // Add overview
+      backdrop_path: movie.backdrop_path,     // Add backdrop_path (can be null)
+      vote_count: movie.vote_count || 0,      // Add vote_count
+      media_type: 'movie',                    // Add media_type
     };
 
     if (isInWishlist) {

@@ -85,12 +85,18 @@ const MovieCard: React.FC<MovieCardProps> = ({ movie: item, disableInViewAnimati
     // Adapt for TV shows if wishlist supports them, or disable for TV shows
     // For now, assuming wishlist is movie-centric or MovieCard only handles movies for wishlist
     if (item.media_type === 'movie') {
+      // Ensure all fields for WishlistMovie are provided
+      const movieItem = item as TmdbMovie; // Cast for easier access
       const movieDataForWishlist: WishlistMovie = {
-        id: item.id,
-        title: (item as TmdbMovie).title, // Type assertion
-        poster_path: item.poster_path,
-        release_date: (item as TmdbMovie).release_date,
-        vote_average: item.vote_average,
+        id: movieItem.id,
+        title: movieItem.title,
+        poster_path: movieItem.poster_path,
+        release_date: movieItem.release_date,
+        vote_average: movieItem.vote_average,
+        overview: movieItem.overview,
+        backdrop_path: movieItem.backdrop_path,
+        vote_count: movieItem.vote_count,
+        media_type: 'movie', 
       };
 
       if (isInWishlist) {

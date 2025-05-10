@@ -9,9 +9,12 @@ export const metadata = {
   description: 'Browse popular actors and people in the film industry.',
 };
 
-export default async function PeoplePage({ searchParams }: { searchParams?: { page?: string | string[] } }) {
+export default async function PeoplePage({ searchParams }: { 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  searchParams?: any; // Workaround for Next.js type issue
+}) {
   let currentPage = 1;
-  const pageQueryParam = searchParams?.page;
+  const pageQueryParam = (searchParams as { page?: string | string[] | undefined })?.page;
 
   if (typeof pageQueryParam === 'string') {
     const pageNum = Number(pageQueryParam);

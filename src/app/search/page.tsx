@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, FormEvent, ChangeEvent, useCallback, useRef } from 'react';
+import { useState, useEffect, FormEvent, ChangeEvent, useCallback, useRef, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Movie, TVShow, searchMovies, discoverMovies, Genre, fetchMovieGenres, searchTvShows, discoverTVShows, MultiSearchResult } from '@/lib/tmdb'; // Corrected TvShow to TVShow and discoverTvShows to discoverTVShows
 import MovieCard from '@/components/MovieCard';
@@ -20,7 +20,7 @@ const debounceQuery = (func: (query: string) => void, waitFor: number) => {
   return debounced;
 };
 
-const SearchPage = () => {
+const SearchPageContent = () => { // Renamed from SearchPage
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -156,7 +156,7 @@ const SearchPage = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []); // Empty dependency array for useCallback if it doesn't depend on props/state that change outside its scope
+  }, [setIsLoading, setError, setSearchResults, setTotalPages, setCurrentPage]); // Added stable state setters
   
   // Update local state (query, filters, page) from URL search params
   useEffect(() => {
@@ -250,9 +250,19 @@ const SearchPage = () => {
 
   }, [router, searchParams]);
 
-  const debouncedQueryUpdate = useCallback(debounceQuery((currentQueryParam: string) => {
+  // Memoize the function that will be debounced
+  const callbackForDebounce = useCallback((currentQueryParam: string) => {
+    // Use activeFiltersRef.current to always get the latest filters
+    // updateUrlWithFiltersAndQuery is a dependency of this callback
     updateUrlWithFiltersAndQuery(currentQueryParam, activeFiltersRef.current, 1);
-  }, 500), [updateUrlWithFiltersAndQuery]); // Add updateUrlWithFiltersAndQuery to dependencies
+  }, [updateUrlWithFiltersAndQuery]); // activeFiltersRef is a ref, its .current doesn't go into deps
+
+  // Memoize the debounced function itself
+  // It depends on callbackForDebounce, so it's recreated if callbackForDebounce changes
+  const debouncedQueryUpdate = useMemo(
+    () => debounceQuery(callbackForDebounce, 500),
+    [callbackForDebounce] 
+  );
 
   const handleQueryInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     const newQueryValue = event.target.value;
@@ -403,6 +413,15 @@ const SearchPage = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+// New SearchPage component that wraps SearchPageContent with Suspense
+const SearchPage = () => {
+  return (
+    <Suspense fallback={<div className="container mx-auto p-4 text-center">Loading search results...</div>}>
+      <SearchPageContent />
+    </Suspense>
   );
 };
 

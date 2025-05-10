@@ -6,14 +6,12 @@ import SeriesClientContent from './SeriesClientContent.tsx';
 import { notFound } from 'next/navigation';
 
 interface SeriesDetailPageProps {
-  params: {
-    id: string;
-  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  params: any; // Workaround for Next.js type issue
 }
 
-export async function generateMetadata({ params: paramsPromise }: SeriesDetailPageProps) {
-  const params = await paramsPromise;
-  const seriesId = parseInt(params.id, 10);
+export async function generateMetadata({ params }: SeriesDetailPageProps) {
+  const seriesId = parseInt((params as { id: string }).id, 10);
 
   if (isNaN(seriesId)) {
     return { title: 'TV Series Not Found' };
@@ -29,9 +27,8 @@ export async function generateMetadata({ params: paramsPromise }: SeriesDetailPa
   };
 }
 
-export default async function SeriesDetailPage({ params: paramsPromise }: SeriesDetailPageProps) {
-  const params = await paramsPromise;
-  const seriesId = parseInt(params.id, 10);
+export default async function SeriesDetailPage({ params }: SeriesDetailPageProps) {
+  const seriesId = parseInt((params as { id: string }).id, 10);
 
   if (isNaN(seriesId)) {
     notFound();

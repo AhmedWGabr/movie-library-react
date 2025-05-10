@@ -6,15 +6,13 @@ import PageTransitionWrapper from '@/components/PageTransitionWrapper';
 import { notFound } from 'next/navigation';
 
 interface PersonPageProps {
-  params: {
-    id: string;
-  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  params: any; // Workaround for Next.js type issue
 }
 
 // Function to generate metadata dynamically
-export async function generateMetadata({ params: paramsPromise }: PersonPageProps) {
-  const params = await paramsPromise; // Await the params object
-  const personId = parseInt(params.id, 10);
+export async function generateMetadata({ params }: PersonPageProps) {
+  const personId = parseInt((params as { id: string }).id, 10);
   if (isNaN(personId)) {
     return { title: 'Person Not Found' };
   }
@@ -28,9 +26,8 @@ export async function generateMetadata({ params: paramsPromise }: PersonPageProp
   };
 }
 
-export default async function PersonPage({ params: paramsPromise }: PersonPageProps) {
-  const params = await paramsPromise; // Await the params object
-  const personId = parseInt(params.id, 10);
+export default async function PersonPage({ params }: PersonPageProps) {
+  const personId = parseInt((params as { id: string }).id, 10);
 
   if (isNaN(personId)) {
     notFound(); // Or handle as an error page

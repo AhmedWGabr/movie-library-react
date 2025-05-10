@@ -22,9 +22,11 @@ function getCurrentPage(searchParams: {  [key: string]: string | string[] | unde
   return page;
 }
 
-export default async function SeriesPage({ searchParams: searchParamsPromise }: { searchParams: { [key: string]: string | string[] | undefined } }) {
-  const searchParams = await searchParamsPromise; // Await the searchParams object
-  const currentPage = getCurrentPage(searchParams);
+export default async function SeriesPage({ searchParams }: { 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  searchParams: any; // Workaround for Next.js type issue
+}) {
+  const currentPage = getCurrentPage(searchParams as { [key: string]: string | string[] | undefined });
   // Sort by popularity, can add more sorting/filtering options later
   const tvShowsData = await discoverTVShows(currentPage, 'popularity.desc');
   const series: TVShow[] = tvShowsData.results;
