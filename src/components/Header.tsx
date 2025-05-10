@@ -2,23 +2,40 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react'; // Added useState for mobile menu
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react'; // Added useState for mobile menu and useEffect for scroll
+import { useRouter, usePathname } from 'next/navigation'; // Added usePathname
 
 const Header = () => {
   const router = useRouter();
+  const pathname = usePathname(); // Get current path
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 50) { // Adjust 50 to your desired scroll threshold
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
   // Search related state and functions are removed as the search bar is removed from header.
   // Search functionality will be handled by the search icon navigating to the search page.
 
 
   return (
     // Using custom TMDB colors defined in tailwind.config.ts
-    <header className="bg-tmdb-dark-blue text-white p-4 fixed w-full top-0 z-50"> {/* Updated background color */}
+    <header className={`text-white p-4 fixed w-full top-0 z-50 transition-colors duration-300 ease-in-out ${isScrolled ? 'bg-black/50 backdrop-blur-sm' : 'bg-tmdb-dark-blue'}`}> {/* Updated background color and added scroll effect */}
       <div className="container mx-auto flex items-center justify-between">
         {/* Left Section: Logo and Title (TMDB style is more compact, often just logo) */}
         <Link href="/" className="flex items-center transition-all duration-300 ease-in-out hover:opacity-80 hover:scale-105">
@@ -30,18 +47,19 @@ const Header = () => {
 
         {/* Middle Section: Navigation - TMDB Style (Desktop) */}
         <nav className="hidden md:flex space-x-4 items-center"> {/* Reduced space-x for more compact look */}
-          <Link href="/movies" className="hover:text-tmdb-accent transition-colors duration-300 ease-in-out font-semibold">
+          <Link href="/movies" className={`nav-link hover:text-tmdb-accent font-semibold ${pathname === '/movies' ? 'nav-link-active text-tmdb-accent' : ''}`}>
             Movies
           </Link>
-          <Link href="/series" className="hover:text-tmdb-accent transition-colors duration-300 ease-in-out font-semibold">
+          <Link href="/series" className={`nav-link hover:text-tmdb-accent font-semibold ${pathname === '/series' ? 'nav-link-active text-tmdb-accent' : ''}`}>
             TV Shows
           </Link>
-          <Link href="/people" className="hover:text-tmdb-accent transition-colors duration-300 ease-in-out font-semibold">
+          <Link href="/people" className={`nav-link hover:text-tmdb-accent font-semibold ${pathname === '/people' ? 'nav-link-active text-tmdb-accent' : ''}`}>
             People
           </Link>
           {/* Placeholder for "More" dropdown */}
           <div className="relative group">
-            <button className="hover:text-tmdb-accent transition-colors duration-300 ease-in-out font-semibold">
+            {/* Note: Active state for "More" is more complex as it's not a direct page link */}
+            <button className="nav-link hover:text-tmdb-accent font-semibold">
               More
             </button>
             {/* Basic dropdown structure - will need styling and JS for interactivity */}
